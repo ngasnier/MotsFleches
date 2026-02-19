@@ -62,7 +62,17 @@ class Dictionary:
             self.indexBySize.append({}) # Index(i)
             self.wordsBySize.append([])
 
-   
+    def contains(self, word):
+        size = len(word)
+        index = self.indexBySize[size]
+        self.nbLookups += 1
+        words = index.get(word, None)
+        if words is None: # Lazy caching 
+            self.nbCacheMiss+=1
+            words = [w for w in self.wordsBySize[size]]
+            index[word] = words
+        return len(words)>0
+            
     def findCandidates(self, placeholder:str, exclusions=[]):
         """
         Return candidates of length between 2 and len(placeholder)

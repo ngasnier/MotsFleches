@@ -13,20 +13,54 @@ class CrosswordGenerator:
 
     def generateGrid(self, width:int, height:int):
         grid = CrosswordGrid(width, height)
-        return self.fillGrid(grid, True)
-        
+        grid = self.fillGridScaffolding(grid, True)
+        if grid is not None:
+            return self.fillGridScaffolding(grid, False)
+        else:
+            return None
+        #return self.fillGrid(grid, True)
+
+    def fillGridScaffolding(self, grid:CrosswordGrid, horizontal:bool):
+        if grid.isGridComplete() and self.isGridValid(grid):
+            return grid
+        else:            
+            interval = grid.nextInterval(horizontal)
+            if interval is None:
+                return grid
+            i, start, end = interval
+            intervalSize = end-start
+            if intervalSize<1:
+                return grid
+            
+            intervalContent = grid.getIntervalContent(interval, horizontal)
+            candidates = self.dict.findCandidates(''.join(intervalContent), grid.usedWords)
+            wordidx = [i for i in range(len(candidates))]
+            weights = [pow(len(w), 2) for w in candidates]
+
+            # We will iterate all candidates until we find something that fits
+            newGrid = None
+            while len(candidates)>0 and newGrid is None:
+
+                # Take a candidate word and remove it so we don't take it twice
+                widx = random.choices(wordidx, weights=weights, k=1)[0]
+                word = candidates[widx]
+                del candidates[widx]
+                del weights[widx]
+                del wordidx[len(wordidx)-1]
+
+                newGrid = copy.deepcopy(grid)
+                newGrid.placeWord(word, interval, horizontal)
+
+                if self.isGridValid(newGrid):
+                    # Fill recursively alternating horizontal and vertical filling
+                    newGrid = self.fillGrid(newGrid, horizontal)
+                else:
+                    newGrid = None            
+
+            return newGrid
+
 
     def fillGrid(self, grid:CrosswordGrid, horizontal:bool):
-        control = [
-            "*B* * ",
-            "LASERS",
-            "*RASEE",
-            "TOLIER",
-            "*NE   ",
-            " N*   ",
-            "*E    "
-        ]
-
         if grid.isGridComplete() and self.isGridValid(grid):
             return grid
         else:            
@@ -57,18 +91,10 @@ class CrosswordGenerator:
                 newGrid = copy.deepcopy(grid)
                 newGrid.placeWord(word, interval, horizontal)
 
-                #print("-------")
-                #print(newGrid.toString())
-                #print("interval", interval, horizontal, "'"+''.join(intervalContent)+"'")
-                #print("hIntervals", newGrid.hIntervals)
-                #print("vIntervals", newGrid.vIntervals)
-                #print("candidates", candidates)
-
                 if self.isGridValid(newGrid):
                     # Fill recursively alternating horizontal and vertical filling
                     newGrid = self.fillGrid(newGrid, not horizontal)
                 else:
-                    #print("=>nope XXXXXXX")
                     newGrid = None            
 
             return newGrid
