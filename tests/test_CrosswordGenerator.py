@@ -155,7 +155,6 @@ class TestCrosswordGenerator(unittest.TestCase):
         grid = CrosswordGrid(6, 7)
         grid.setGridContent(fullEmpty)
         grid.put(1, 5, "*")
-        grid.put(2, 5, "*")
         grid.put(0, 6, "*")
         self.assertTrue(self.generator.isGridValid(grid))
 

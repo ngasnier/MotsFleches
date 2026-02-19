@@ -94,29 +94,31 @@ class CrosswordGenerator:
             for i in range(grid.width):
                 if grid.grid[j][i] in "*#": # Definitions and masking cells not concerned
                     continue
-                hasFreedom = (
-                    (i>0 and grid.grid[j][i-1] not in "*#")
-                    or (i<grid.width-1 and grid.grid[j][i+1] not in "*#")
-                    or (j>0 and grid.grid[j-1][i] not in "*#")
-                    or (j<grid.height-1 and grid.grid[j+1][i] not in "*#")
-                )
+
+                hasLeft = (i>0 and grid.grid[j][i-1] not in "*#")
+                hasTopLeft = (i>0 and j>0 and grid.grid[j-1][i-1] not in "*#")
+                hasTop = (j>0 and grid.grid[j-1][i] not in "*#")
+                hasTopRight = (i<grid.width-1 and j>0 and grid.grid[j-1][i+1] not in "*#")
+                hasRight = (i<grid.width-1 and grid.grid[j][i+1] not in "*#")
+                hasBottomRight = (i<grid.width-1 and j<grid.height-1 and grid.grid[j+1][i+1] not in "*#")
+                hasBottom = (j<grid.height-1 and grid.grid[j+1][i] not in "*#")
+                hasBottomLeft = (i>0 and j<grid.height-1 and grid.grid[j+1][i-1] not in "*#")
+
+                hasFreedom = hasLeft or hasRight or hasTop or hasBottom
                 if not hasFreedom:
                     return False
                 
-            # Check that we don't have isolated letters or empty cells
-        for j in range(grid.height):
-            for i in range(grid.width):
-                if grid.grid[j][i] in "*#": # Definitions and masking cells not concerned
-                    continue
-                hasFreedom = ( # TODO : j'ai du oublier de traiter correctement les cas border... a voir à tête reposée
-                    (i>0 and grid.grid[j][i-1] not in "*#")
-                    or (i<grid.width-1 and grid.grid[j][i+1] not in "*#")
-                    or (j>0 and grid.grid[j-1][i] not in "*#")
-                    or (j<grid.height-1 and grid.grid[j+1][i] not in "*#")
+                isCrossing = (
+                    (hasLeft and (hasTopLeft or hasBottomLeft))
+                    or (hasTop and (hasTopLeft or hasTopRight))
+                    or (hasRight and (hasTopRight or hasBottomRight))
+                    or (hasBottom and (hasBottomLeft or hasBottomRight))
                 )
-                if not hasFreedom:
+                if not isCrossing:
                     return False
-                
+                                          
+
+
         # Check definition cells rules
         for j in range(grid.height):
             for i in range(grid.width):
