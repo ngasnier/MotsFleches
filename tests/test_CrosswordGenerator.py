@@ -29,7 +29,6 @@ class TestCrosswordGenerator(unittest.TestCase):
 
     def test_Generate(self):
         grid = self.generator.generateGrid(6, 7)
-        print(grid.toString())
         self.assertTrue(grid.equals(self.testContent))
 
     def test_isValid_empty(self):

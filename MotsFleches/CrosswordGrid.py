@@ -31,6 +31,7 @@ class CrosswordGrid:
                 if self.grid[i][j] != char:
                     return False
         return True
+    
 
     def setGridContent(self, content:list[str]):
         if len(content) != self.height:
@@ -88,17 +89,16 @@ class CrosswordGrid:
 
         self.initIntervals()
 
-
-    def placeWord(self, word:str, interval:Tuple[int, int, int], horizontal:bool):        
-        l = len(word)
+    def placeDefinition(self, interval:Tuple[int, int, int], pos: int, horizontal:bool, ignoreStart:bool=False):
         i, start, end = interval
-        if horizontal:
-            for col, letter in enumerate(word):
-                self.grid[i][start + col] = letter
-            if start+l<self.width:
-                self.grid[i][start + l] = "*"
 
-            interIdx = self.findContainingIntervalIdx(i, start+l, False)
+        if pos<0 or pos>=end:
+            return False
+        
+        if horizontal:
+            self.grid[i][pos] = "*"
+
+            interIdx = self.findContainingIntervalIdx(i, pos, False)
             if interIdx is not None: 
                 splitInter = self.splitInterval(self.vIntervals[interIdx], i)
                 del self.vIntervals[interIdx]
@@ -108,12 +108,9 @@ class CrosswordGrid:
                         self.vIntervals.insert(interIdx, inter)
                         interIdx+=1
         else:
-            for row, letter in enumerate(word):
-                self.grid[start+row][i] = letter
-            if start+l<self.height:
-                self.grid[start+l][i] = "*"
+            self.grid[pos][i] = "*"
 
-            interIdx = self.findContainingIntervalIdx(start+l, i, True)
+            interIdx = self.findContainingIntervalIdx(pos, i, True)
             if interIdx is not None:
                 splitInter = self.splitInterval(self.hIntervals[interIdx], i)
                 del self.hIntervals[interIdx]
@@ -123,14 +120,33 @@ class CrosswordGrid:
                         self.hIntervals.insert(interIdx, inter)
                         interIdx+=1
 
-        interval = self.splitInterval(interval, start+l)
-        if len(interval)>1:
-            ii, istart, iend = interval[1]
-            if iend-istart>1:
+        intervals = self.splitInterval(interval, pos)
+        ipos = 0
+        for inter in intervals: 
+            ii, istart, iend = inter
+            if iend-istart>1 and (not ignoreStart or (ignoreStart and istart>pos)):
                 if horizontal:
-                    self.hIntervals.insert(0, interval[1])
+                    self.hIntervals.insert(ipos, inter)
+                    ipos+=1
                 else:
-                    self.vIntervals.insert(0, interval[1])
+                    self.vIntervals.insert(ipos, inter)
+                    ipos+=1
+        return True
+
+
+    def placeWord(self, word:str, interval:Tuple[int, int, int], horizontal:bool, definitionAfter:bool=True):
+        l = len(word)
+        i, start, end = interval
+        if horizontal:
+            for col, letter in enumerate(word):
+                self.grid[i][start + col] = letter
+            
+        else:
+            for row, letter in enumerate(word):
+                self.grid[start+row][i] = letter
+
+        if definitionAfter:
+            self.placeDefinition(interval, start+l, horizontal, True)
 
         self.usedWords.append(word)
 
@@ -176,9 +192,23 @@ class CrosswordGrid:
                     return idx
             return None
         
+    def findCrossindIntervals(self, interval:Tuple[int, int, int], horizontal:bool):
+        foundIntervals = []
+        i, start, end = interval
+        if horizontal:
+            for k in range(start, end):
+                idx = self.findContainingIntervalIdx(i, k, not horizontal)
+                if idx is not None:
+                    foundIntervals.append(self.vIntervals[idx])
+
+        else:
+            for k in range(start, end):
+                idx = self.findContainingIntervalIdx(k, i, not horizontal)
+                if idx is not None:
+                    foundIntervals.append(self.hIntervals[idx])
+        return foundIntervals
+        
     def splitInterval(self, interval:Tuple[int, int, int], pos:int):
-        if pos==0:
-            return interval
         i, start, end = interval
         newStart = pos+1
         newInter1 = [i, start, pos]

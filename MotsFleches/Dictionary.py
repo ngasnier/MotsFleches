@@ -73,7 +73,7 @@ class Dictionary:
             index[word] = words
         return len(words)>0
             
-    def findCandidates(self, placeholder:str, exclusions=[]):
+    def findCandidates(self, placeholder:str, exclusions=[], exactLength:bool=False):
         """
         Return candidates of length between 2 and len(placeholder)
         """
@@ -86,18 +86,35 @@ class Dictionary:
             lenMax = len(pattern)+1
         else:
             lenMax = lenMax+1
+
+        # Don't try to fit words smaller than partial words
+        lenMin = 2
+        i = 0
+        # All length ok if pattern is empty...
+        while i<lenMax-1 and pattern[i]==".":
+            i+=1
+        # If letters, can only fit at least this size...
+        while i<lenMax-1 and pattern[i]!=".":
+            if i+1>lenMin:
+                lenMin = i+1
+            i+=1
+
+        if exactLength:
+            lenMin = lenMax-1
+
         index = None
-        for i in range(2, lenMax):
+        for i in range(lenMin, lenMax):
             self.nbLookups += 1
-            index = self.indexBySize[i]
-            subPattern = pattern[:i]
-            words = index.get(subPattern, None)
-            if words is None: # Lazy caching of searches
-                self.nbCacheMiss+=1
-                regexp = re.compile(f'^{subPattern}$')
-                #words = [w for w in self.wordsBySize[i] if regexp.match(w)]
-                words = list(filter(regexp.match, self.wordsBySize[i]))
-                index[subPattern] = words
-            candidates = candidates + [w for w in words if w not in exclusions and w not in candidates]
+            if i<len(self.indexBySize):
+                index = self.indexBySize[i]
+                subPattern = pattern[:i]
+                words = index.get(subPattern, None)
+                if words is None: # Lazy caching of searches
+                    self.nbCacheMiss+=1
+                    regexp = re.compile(f'^{subPattern}$')
+                    #words = [w for w in self.wordsBySize[i] if regexp.match(w)]
+                    words = list(filter(regexp.match, self.wordsBySize[i]))
+                    index[subPattern] = words
+                candidates = candidates + [w for w in words if w not in exclusions and w not in candidates]
         return candidates
 
