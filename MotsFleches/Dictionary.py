@@ -1,5 +1,31 @@
 import re
 
+class Index:
+    def __init__(self, size):
+        self.size = size
+        self.words = []
+        self.index = [ {} for i in range(size)]
+
+    def put(self, word):
+        if len(word)!=self.size:
+            raise Exception(f"try to add word '{word}' in an index of size {self.size}")
+        
+        self.words.append(word)
+
+        for i in range(self.size):
+            idxBySize = self.index[i]
+            letter = word[i]
+            idxByLetter = idxBySize.get(letter, [])
+            idxByLetter.append(word)
+            idxBySize[letter] = idxByLetter
+
+    def query(self, pos, letter):
+        return self.index[pos].get(letter, [])
+    
+    def queryAllWords(self):
+        return self.words
+    
+
 class Dictionary:
     def __init__(self, textFilePath:str, encoding='utf-8'):
         """
@@ -21,8 +47,8 @@ class Dictionary:
             'Ô': 'O', 'Ö': 'O',
             'Ù': 'U', 'Û': 'U', 'Ü': 'U'
         }
+        self.cacheBySize = []
         self.indexBySize = []
-        self.wordsBySize = []
         self.nbLookups = 0
         self.nbCacheMiss = 0
 
@@ -54,22 +80,22 @@ class Dictionary:
         # Allocate index if needed
         self.allocateIndexBySize(wordSize)
 
-        self.wordsBySize[wordSize].append(word)
+        self.indexBySize[wordSize].put(word)
 
     def allocateIndexBySize(self, size):
-        start = len(self.indexBySize)
+        start = len(self.cacheBySize)
         for i in range(start, size+1):
-            self.indexBySize.append({}) # Index(i)
-            self.wordsBySize.append([])
+            self.cacheBySize.append({}) # Index(i)
+            self.indexBySize.append(Index(i))
 
     def contains(self, word):
         size = len(word)
-        index = self.indexBySize[size]
+        index = self.cacheBySize[size]
         self.nbLookups += 1
         words = index.get(word, None)
         if words is None: # Lazy caching 
             self.nbCacheMiss+=1
-            words = [w for w in self.wordsBySize[size]]
+            words = [w for w in self.indexBySize[size].queryAllWords()]
             index[word] = words
         return len(words)>0
             
@@ -105,16 +131,27 @@ class Dictionary:
         index = None
         for i in range(lenMin, lenMax):
             self.nbLookups += 1
-            if i<len(self.indexBySize):
-                index = self.indexBySize[i]
+            if i<len(self.cacheBySize):
+                cache = self.cacheBySize[i]
                 subPattern = pattern[:i]
-                words = index.get(subPattern, None)
+                words = cache.get(subPattern, None)
                 if words is None: # Lazy caching of searches
                     self.nbCacheMiss+=1
+
+                    index = self.indexBySize[i]
+                    bestResult = index.queryAllWords()
+                    bestResultCount = 1000000
+                    for pos in range(i):
+                        if subPattern[pos]!='.':
+                            result = index.query(pos, subPattern[pos])
+                            if len(result)<bestResultCount:
+                                bestResult = result
+                                bestResultCount = len(result)
+
                     regexp = re.compile(f'^{subPattern}$')
-                    #words = [w for w in self.wordsBySize[i] if regexp.match(w)]
-                    words = list(filter(regexp.match, self.wordsBySize[i]))
-                    index[subPattern] = words
+                    #words = [w for w in self.indexBySize[i] if regexp.match(w)]
+                    words = list(filter(regexp.match, bestResult))
+                    cache[subPattern] = words
                 candidates = candidates + [w for w in words if w not in exclusions and w not in candidates]
         return candidates
 

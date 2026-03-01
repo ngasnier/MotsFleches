@@ -17,13 +17,16 @@ class CrosswordGrid:
                 self.grid[i][0] = '*'
 
         self.initIntervals()
-        
-    def toString(self):
+
+    def __str__(self):
         """Convert grid to printable string."""
         grilleFmt = ""
         for ligne in self.grid:
             grilleFmt += ''.join(ligne)+"\n"
         return grilleFmt
+
+    def __repr__(self):
+        return self.__str__()
     
     def equals(self, content:list[str]):
         for i, line in enumerate(content):

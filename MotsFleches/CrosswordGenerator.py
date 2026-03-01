@@ -13,14 +13,14 @@ class CrosswordGenerator:
 
     def generateGrid(self, width:int, height:int):
         grid = CrosswordGrid(width, height)
-        grid = self.fillGridScaffolding(grid, True)
-        if grid is not None:
-            print(grid.toString())
-            return self.fillGridScaffolding(grid, False)
-        else:
-            print("returned none grid after horizontal pass")
-            return None
-        #return self.fillGrid(grid, True)
+        #grid = self.fillGridScaffolding(grid, True)
+        #if grid is not None:
+        #    print(grid)
+        #    return self.fillGridScaffolding(grid, False)
+        #else:
+        #    print("returned none grid after horizontal pass")
+        #    return None
+        return self.fillGrid(grid, True)
 
     def fillGridScaffolding(self, grid:CrosswordGrid, horizontal:bool):
         curGrid = grid
@@ -34,7 +34,7 @@ class CrosswordGenerator:
             # skip invalid intervals
             if intervalSize<1:
                 print(f"Warning : found invalid interval horizontal={horizontal} interval={interval}")
-                print(curGrid.toString())
+                print(curGrid)
                 interval = curGrid.nextInterval(horizontal) 
                 continue            
 
@@ -66,14 +66,14 @@ class CrosswordGenerator:
                     tmpGrid = copy.deepcopy(curGrid)
                     if tmpGrid.placeDefinition(interval, defPos, horizontal):
                         if self.isGridValid(tmpGrid):
-                            print(tmpGrid.toString())
+                            print(tmpGrid)
                             winterval = tmpGrid.nextInterval(horizontal)
                             wi, wstart, wend = winterval
                             wintervalSize = wend-wstart
                             wintervalContent = tmpGrid.getIntervalContent(winterval, horizontal)
                             if wintervalSize<1:
                                 print(f"Warning : found invalid interval horizontal={horizontal} interval={interval}")
-                                print(tmpGrid.toString())
+                                print(tmpGrid)
                                 newGrid = None
                                 continue
                         else:
@@ -106,7 +106,7 @@ class CrosswordGenerator:
                         newGrid = copy.deepcopy(tmpGrid)
                         newGrid.placeWord(word, winterval, horizontal)
                         print("**** try word {word}")
-                        print(newGrid.toString())
+                        print(newGrid)
     
                         if self.isGridValid(newGrid):
                             newGrid = self.fillGridScaffolding(newGrid, horizontal)
