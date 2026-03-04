@@ -1,6 +1,54 @@
 
 from typing import Tuple
 
+
+class Interval:
+    def __init__(self, offset:int, start:int, end:int, direction:bool):
+        """
+        Parameters
+        ----------
+        offset : int
+            grid or row index of the interval relative to the grid.
+        start : int
+            start index of the interval in the row or column indicated by offset
+        end : int
+            end index of the interval in the row or column indicated by offset.
+            convention is that the interval stop at index end-1.
+        """
+        self.offset = offset
+        self.start = start
+        self.end = end
+        self.direction = direction
+
+#        self.grid = [Charset() for i in range(self.size)] # array of charset
+#        self.possibles = [] # array of possible outcomes TODO
+   
+    def split(self, pos:int):
+        """
+        Split interval by a definition cell.
+
+        Parameters
+        ---------
+        pos : the position of the definition cell, relative to the grid.
+
+        Returns
+        -------
+        array of Interval. Only intervals of at least one cell are returned.
+        """
+        newStart = pos+1
+        newInter1 = Interval(self.offset, self.start, pos, self.direction)
+        newInter2 = Interval(self.offset, newStart, self.end, self.direction)
+        intervals = [  ]
+        if pos-self.start>0:
+            intervals.append(newInter1)
+        if self.end-newStart>0:
+            intervals.append(newInter2)
+        return intervals
+
+    def __eq__(self, value):
+        #value is Interval and
+        return  value.offset==self.offset and value.start==self.start and value.end==self.end and value.direction==self.direction
+    
 class CrosswordGrid:
     def __init__(self, width:int, height:int):
         self.width = width
@@ -34,7 +82,6 @@ class CrosswordGrid:
                 if self.grid[i][j] != char:
                     return False
         return True
-    
 
     def setGridContent(self, content:list[str]):
         if len(content) != self.height:
@@ -59,11 +106,11 @@ class CrosswordGrid:
                     curInter += self.grid[j][i]
                 else:
                     if len(curInter)>1 and " " in curInter:
-                        self.hIntervals.append([j, curStart, curStart+len(curInter)])
+                        self.hIntervals.append(Interval(j, curStart, curStart+len(curInter), True))
                     curStart = i+1
                     curInter = ""
             if len(curInter)>1 and " " in curInter:
-                self.hIntervals.append([j, curStart, curStart+len(curInter)])
+                self.hIntervals.append(Interval(j, curStart, curStart+len(curInter), True))
 
         self.vIntervals = []
         for i in range(self.width):
@@ -74,11 +121,11 @@ class CrosswordGrid:
                     curInter += self.grid[j][i]
                 else:
                     if len(curInter)>1 and " " in curInter:
-                        self.vIntervals.append([i, curStart, curStart+len(curInter)])
+                        self.vIntervals.append(Interval(i, curStart, curStart+len(curInter), False))
                     curStart = j+1
                     curInter = ""
             if len(curInter)>1 and " " in curInter:
-                self.vIntervals.append([i, curStart, curStart+len(curInter)])
+                self.vIntervals.append(Interval(i, curStart, curStart+len(curInter), False))
 
     def put(self, x:int, y:int, c:str):
         if x<0 or x>=self.width:
@@ -92,42 +139,37 @@ class CrosswordGrid:
 
         self.initIntervals()
 
-    def placeDefinition(self, interval:Tuple[int, int, int], pos: int, horizontal:bool, ignoreStart:bool=False):
-        i, start, end = interval
-
-        if pos<0 or pos>=end:
+    def placeDefinition(self, interval:Interval, pos: int, horizontal:bool, ignoreStart:bool=False):
+        if pos<0 or pos>=interval.end:
             return False
         
         if horizontal:
-            self.grid[i][pos] = "*"
+            self.grid[interval.offset][pos] = "*"
 
-            interIdx = self.findContainingIntervalIdx(i, pos, False)
+            interIdx = self.findContainingIntervalIdx(interval.offset, pos, False)
             if interIdx is not None: 
-                splitInter = self.splitInterval(self.vIntervals[interIdx], i)
+                splitInter = self.vIntervals[interIdx].split(interval.offset)
                 del self.vIntervals[interIdx]
                 for inter in splitInter:
-                    ii, istart, iend = inter
-                    if iend-istart>1:
+                    if inter.end-inter.start>1:
                         self.vIntervals.insert(interIdx, inter)
                         interIdx+=1
         else:
-            self.grid[pos][i] = "*"
+            self.grid[pos][interval.offset] = "*"
 
-            interIdx = self.findContainingIntervalIdx(pos, i, True)
+            interIdx = self.findContainingIntervalIdx(pos, interval.offset, True)
             if interIdx is not None:
-                splitInter = self.splitInterval(self.hIntervals[interIdx], i)
+                splitInter = self.hIntervals[interIdx].split(interval.offset)
                 del self.hIntervals[interIdx]
                 for inter in splitInter:
-                    ii, istart, iend = inter
-                    if iend-istart>1:
+                    if inter.end-inter.start>1:
                         self.hIntervals.insert(interIdx, inter)
                         interIdx+=1
 
-        intervals = self.splitInterval(interval, pos)
+        intervals = interval.split(pos)
         ipos = 0
         for inter in intervals: 
-            ii, istart, iend = inter
-            if iend-istart>1 and (not ignoreStart or (ignoreStart and istart>pos)):
+            if inter.end-inter.start>1 and (not ignoreStart or (ignoreStart and inter.start>pos)):
                 if horizontal:
                     self.hIntervals.insert(ipos, inter)
                     ipos+=1
@@ -137,31 +179,29 @@ class CrosswordGrid:
         return True
 
 
-    def placeWord(self, word:str, interval:Tuple[int, int, int], horizontal:bool, definitionAfter:bool=True):
+    def placeWord(self, word:str, interval:Interval, horizontal:bool, definitionAfter:bool=True):
         l = len(word)
-        i, start, end = interval
         if horizontal:
             for col, letter in enumerate(word):
-                self.grid[i][start + col] = letter
+                self.grid[interval.offset][interval.start + col] = letter
             
         else:
             for row, letter in enumerate(word):
-                self.grid[start+row][i] = letter
+                self.grid[interval.start+row][interval.offset] = letter
 
         if definitionAfter:
-            self.placeDefinition(interval, start+l, horizontal, True)
+            self.placeDefinition(interval, interval.start+l, horizontal, True)
 
         self.usedWords.append(word)
 
 
-    def getIntervalContent(self, interval:Tuple[int, int, int], horizontal:bool):
-        i, start, end = interval
+    def getIntervalContent(self, interval:Interval, horizontal:bool):
         if horizontal:
-            return self.grid[i][start:end]
+            return self.grid[interval.offset][interval.start:interval.end]
         else:
             contenu = ""
-            for j in range(start, end):
-                contenu += self.grid[j][i]
+            for j in range(interval.start, interval.end):
+                contenu += self.grid[j][interval.offset]
             return contenu
 
     def nextInterval(self, horizontal:bool):
@@ -184,45 +224,30 @@ class CrosswordGrid:
     def findContainingIntervalIdx(self, line:int, col:int, horizontal:bool):
         if horizontal:
             for idx, interval in enumerate(self.hIntervals):
-                i, start, end = interval
-                if i==line and col>=start and col<end:
+                if interval.offset==line and col>=interval.start and col<interval.end:
                     return idx
             return None
         else:
             for idx, interval in enumerate(self.vIntervals):
-                i, start, end = interval
-                if i==col and line>=start and line<end:
+                if interval.offset==col and line>=interval.start and line<interval.end:
                     return idx
             return None
         
-    def findCrossindIntervals(self, interval:Tuple[int, int, int], horizontal:bool):
+    def findCrossindIntervals(self, interval:Interval, horizontal:bool):
         foundIntervals = []
-        i, start, end = interval
         if horizontal:
-            for k in range(start, end):
-                idx = self.findContainingIntervalIdx(i, k, not horizontal)
+            for k in range(interval.start, interval.end):
+                idx = self.findContainingIntervalIdx(interval.offset, k, not horizontal)
                 if idx is not None:
                     foundIntervals.append(self.vIntervals[idx])
 
         else:
-            for k in range(start, end):
-                idx = self.findContainingIntervalIdx(k, i, not horizontal)
+            for k in range(interval.start, interval.end):
+                idx = self.findContainingIntervalIdx(k, interval.offset, not horizontal)
                 if idx is not None:
                     foundIntervals.append(self.hIntervals[idx])
         return foundIntervals
-        
-    def splitInterval(self, interval:Tuple[int, int, int], pos:int):
-        i, start, end = interval
-        newStart = pos+1
-        newInter1 = [i, start, pos]
-        newInter2 = [i, newStart, end]
-        intervals = [  ]
-        if pos-start>0:
-            intervals.append(newInter1)
-        if end-newStart>0:
-            intervals.append(newInter2)
-        return intervals
-               
+             
     def isGridComplete(self):
         for ligne in self.grid:
             if " " in ligne:

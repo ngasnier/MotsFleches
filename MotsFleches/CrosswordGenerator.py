@@ -26,8 +26,7 @@ class CrosswordGenerator:
         curGrid = grid
         interval = curGrid.nextInterval(horizontal)
         while curGrid is not None and (not curGrid.isGridComplete() or not self.isGridValid(curGrid)) and interval is not None:
-            i, start, end = interval
-            intervalSize = end-start
+            intervalSize = interval.end-interval.start
 
             print(f"interval {interval}")
 
@@ -68,8 +67,7 @@ class CrosswordGenerator:
                         if self.isGridValid(tmpGrid):
                             print(tmpGrid)
                             winterval = tmpGrid.nextInterval(horizontal)
-                            wi, wstart, wend = winterval
-                            wintervalSize = wend-wstart
+                            wintervalSize = winterval.end-winterval.start
                             wintervalContent = tmpGrid.getIntervalContent(winterval, horizontal)
                             if wintervalSize<1:
                                 print(f"Warning : found invalid interval horizontal={horizontal} interval={interval}")
@@ -82,8 +80,7 @@ class CrosswordGenerator:
                             continue
                     else: # Change nothing, work with original interval
                         winterval = interval
-                        wi, wstart, wend = winterval
-                        wintervalSize = wend-wstart
+                        wintervalSize = interval.end-interval.start
                         wintervalContent = tmpGrid.getIntervalContent(winterval, horizontal)
                 
                     # Find candidates for this interval
@@ -137,8 +134,7 @@ class CrosswordGenerator:
             interval = grid.nextInterval(horizontal)
             if interval is None:
                 return None
-            i, start, end = interval
-            intervalSize = end-start
+            intervalSize = interval.end-interval.start
             if intervalSize<1:
                 return None
             
