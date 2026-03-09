@@ -1,6 +1,6 @@
 
 from typing import Tuple
-
+from IPossible import AllWords
 
 class Interval:
     def __init__(self, offset:int, start:int, end:int, direction:bool):
@@ -19,9 +19,7 @@ class Interval:
         self.start = start
         self.end = end
         self.direction = direction
-
-#        self.grid = [Charset() for i in range(self.size)] # array of charset
-#        self.possibles = [] # array of possible outcomes TODO
+        self.possibles = [] 
    
     def split(self, pos:int):
         """
@@ -44,6 +42,9 @@ class Interval:
         if self.end-newStart>0:
             intervals.append(newInter2)
         return intervals
+    
+    def size(self):
+        return self.end-self.start
 
     def __eq__(self, value):
         #value is Interval and
@@ -139,11 +140,11 @@ class CrosswordGrid:
 
         self.initIntervals()
 
-    def placeDefinition(self, interval:Interval, pos: int, horizontal:bool, ignoreStart:bool=False):
+    def placeDefinition(self, interval:Interval, pos: int, ignoreStart:bool=False):
         if pos<0 or pos>=interval.end:
             return False
         
-        if horizontal:
+        if interval.direction:
             self.grid[interval.offset][pos] = "*"
 
             interIdx = self.findContainingIntervalIdx(interval.offset, pos, False)
@@ -170,7 +171,7 @@ class CrosswordGrid:
         ipos = 0
         for inter in intervals: 
             if inter.end-inter.start>1 and (not ignoreStart or (ignoreStart and inter.start>pos)):
-                if horizontal:
+                if interval.direction:
                     self.hIntervals.insert(ipos, inter)
                     ipos+=1
                 else:
@@ -179,9 +180,9 @@ class CrosswordGrid:
         return True
 
 
-    def placeWord(self, word:str, interval:Interval, horizontal:bool, definitionAfter:bool=True):
+    def placeWord(self, word:str, interval:Interval, definitionAfter:bool=True):
         l = len(word)
-        if horizontal:
+        if interval.direction:
             for col, letter in enumerate(word):
                 self.grid[interval.offset][interval.start + col] = letter
             
@@ -190,13 +191,13 @@ class CrosswordGrid:
                 self.grid[interval.start+row][interval.offset] = letter
 
         if definitionAfter:
-            self.placeDefinition(interval, interval.start+l, horizontal, True)
+            self.placeDefinition(interval, interval.start+l, True)
 
         self.usedWords.append(word)
 
 
-    def getIntervalContent(self, interval:Interval, horizontal:bool):
-        if horizontal:
+    def getIntervalContent(self, interval:Interval):
+        if interval.direction:
             return self.grid[interval.offset][interval.start:interval.end]
         else:
             contenu = ""
@@ -204,22 +205,24 @@ class CrosswordGrid:
                 contenu += self.grid[j][interval.offset]
             return contenu
 
-    def nextInterval(self, horizontal:bool):
-        if horizontal:
+    def nextInterval(self, forceDirection:bool = None):        
+        if (forceDirection is not None and forceDirection==True) or forceDirection==None:
             while len(self.hIntervals)>0:                
                 it = self.hIntervals.pop(0)
-                content = self.getIntervalContent(it, horizontal)
+                content = self.getIntervalContent(it)
                 if " " in content:
-                    return it
-            return None
-        else:
-            while len(self.vIntervals)>0:
-                it = self.vIntervals.pop(0)
-                content = self.getIntervalContent(it, horizontal)
-                if " " in content:
-                    return it
 
+                    return it
+        
+        if forceDirection is not None and forceDirection==True:
             return None
+
+        while len(self.vIntervals)>0:
+            it = self.vIntervals.pop(0)
+            content = self.getIntervalContent(it)
+            if " " in content:
+                return it
+        return None
         
     def findContainingIntervalIdx(self, line:int, col:int, horizontal:bool):
         if horizontal:

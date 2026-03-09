@@ -1,3 +1,4 @@
 from .test_Dictionary import TestDictionary
+from .test_IPossible import TestIPossible
 from .test_CrosswordGrid import TestCrosswordGrid
 from .test_CrosswordGenerator import TestCrosswordGenerator

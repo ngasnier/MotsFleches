@@ -1,4 +1,118 @@
+from __future__ import annotations # Urk... why is that necessary... Python is a strange language...
 import re
+
+class Charset:
+    ALL_LETTERS = 0b11111111111111111111111111
+    A = 0b00000000000000000000000001
+    B = 0b00000000000000000000000010
+    C = 0b00000000000000000000000100
+    D = 0b00000000000000000000001000
+    E = 0b00000000000000000000010000
+    F = 0b00000000000000000000100000
+    G = 0b00000000000000000001000000
+    H = 0b00000000000000000010000000
+    I = 0b00000000000000000100000000
+    J = 0b00000000000000001000000000
+    K = 0b00000000000000010000000000
+    L = 0b00000000000000100000000000
+    M = 0b00000000000001000000000000
+    N = 0b00000000000010000000000000
+    O = 0b00000000000100000000000000
+    P = 0b00000000001000000000000000
+    Q = 0b00000000010000000000000000
+    R = 0b00000000100000000000000000
+    S = 0b00000001000000000000000000
+    T = 0b00000010000000000000000000
+    U = 0b00000100000000000000000000
+    V = 0b00001000000000000000000000
+    W = 0b00010000000000000000000000
+    X = 0b00100000000000000000000000
+    Y = 0b01000000000000000000000000
+    Z = 0b10000000000000000000000000
+    
+    def __init__(self, value:int = ALL_LETTERS):
+       self.chars =  value
+    
+    def intersect(self, other:Charset):
+        self.chars = self.chars & other.chars
+
+    def empty(self):
+        self.chars = 0
+
+    def setLetter(self, letter:str):
+        if len(str)!=1:
+            raise ValueError("setLetter : only strings of one character allowed.")
+        self.chars = self.chars | Charset.A if letter=="A" else 0
+        self.chars = self.chars | Charset.B if letter=="B" else 0
+        self.chars = self.chars | Charset.C if letter=="C" else 0
+        self.chars = self.chars | Charset.D if letter=="D" else 0
+        self.chars = self.chars | Charset.E if letter=="E" else 0
+        self.chars = self.chars | Charset.F if letter=="F" else 0
+        self.chars = self.chars | Charset.G if letter=="G" else 0
+        self.chars = self.chars | Charset.H if letter=="H" else 0
+        self.chars = self.chars | Charset.I if letter=="I" else 0
+        self.chars = self.chars | Charset.J if letter=="J" else 0
+        self.chars = self.chars | Charset.K if letter=="K" else 0
+        self.chars = self.chars | Charset.L if letter=="L" else 0
+        self.chars = self.chars | Charset.M if letter=="M" else 0
+        self.chars = self.chars | Charset.N if letter=="N" else 0
+        self.chars = self.chars | Charset.O if letter=="O" else 0
+        self.chars = self.chars | Charset.P if letter=="P" else 0
+        self.chars = self.chars | Charset.Q if letter=="Q" else 0
+        self.chars = self.chars | Charset.R if letter=="R" else 0
+        self.chars = self.chars | Charset.S if letter=="S" else 0
+        self.chars = self.chars | Charset.T if letter=="T" else 0
+        self.chars = self.chars | Charset.U if letter=="U" else 0
+        self.chars = self.chars | Charset.V if letter=="V" else 0
+        self.chars = self.chars | Charset.W if letter=="W" else 0
+        self.chars = self.chars | Charset.X if letter=="X" else 0
+        self.chars = self.chars | Charset.Y if letter=="Y" else 0
+        self.chars = self.chars | Charset.Z if letter=="Z" else 0
+
+    def add(self, other:Charset):
+        self.chars = self.chars | other.chars
+
+    def remove(self, other:Charset):
+        self.chars = self.chars & ( other.chars ^ Charset.ALL_LETTERS )
+
+    def count(self):
+        # if too slow : use gmpy popcount()
+        i:int = self.chars
+        i = i - ((i >> 1) & 0x55555555)                 # add pairs of bits
+        i = (i & 0x33333333) + ((i >> 2) & 0x33333333)  # quads
+        i = (i + (i >> 4)) & 0x0F0F0F0F                 # groups of 8
+        i = (i * 0x01010101) & 0xffffffff               # horizontal sum of bytes
+        return  i >> 24; 
+
+    def __str__(self):
+        str = ""
+        str += "A" if (self.chars & Charset.A)>0 else ""
+        str += "B" if (self.chars & Charset.B)>0 else ""
+        str += "C" if (self.chars & Charset.C)>0 else ""
+        str += "D" if (self.chars & Charset.D)>0 else ""
+        str += "E" if (self.chars & Charset.E)>0 else ""
+        str += "F" if (self.chars & Charset.F)>0 else ""
+        str += "G" if (self.chars & Charset.G)>0 else ""
+        str += "H" if (self.chars & Charset.H)>0 else ""
+        str += "I" if (self.chars & Charset.I)>0 else ""
+        str += "J" if (self.chars & Charset.J)>0 else ""
+        str += "K" if (self.chars & Charset.K)>0 else ""
+        str += "L" if (self.chars & Charset.L)>0 else ""
+        str += "M" if (self.chars & Charset.M)>0 else ""
+        str += "N" if (self.chars & Charset.N)>0 else ""
+        str += "O" if (self.chars & Charset.O)>0 else ""
+        str += "P" if (self.chars & Charset.P)>0 else ""
+        str += "Q" if (self.chars & Charset.Q)>0 else ""
+        str += "R" if (self.chars & Charset.R)>0 else ""
+        str += "S" if (self.chars & Charset.S)>0 else ""
+        str += "T" if (self.chars & Charset.T)>0 else ""
+        str += "U" if (self.chars & Charset.U)>0 else ""
+        str += "V" if (self.chars & Charset.V)>0 else ""
+        str += "W" if (self.chars & Charset.W)>0 else ""
+        str += "X" if (self.chars & Charset.X)>0 else ""
+        str += "Y" if (self.chars & Charset.Y)>0 else ""
+        str += "Z" if (self.chars & Charset.Z)>0 else ""
+        return ""
 
 class Index:
     def __init__(self, size):
@@ -54,7 +168,7 @@ class Dictionary:
 
         with open(textFilePath, 'r', encoding=encoding) as file:
             for line in file:
-                word, separators = self.cleanWord(line)  # On normalise en majuscules
+                word, separators = self.cleanWord(line)  
                 if word:  
                     self.addWord(word)
 

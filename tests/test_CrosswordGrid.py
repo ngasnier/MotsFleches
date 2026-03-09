@@ -138,7 +138,7 @@ class TestCrosswordGrid(unittest.TestCase):
         testGrid = copy.deepcopy(self.grid)
         interval = testGrid.nextInterval(False)
         self.assertEqual(interval, Interval(1, 0, 7, False))
-        testGrid.placeWord('SALE', interval, False)
+        testGrid.placeWord('SALE', interval)
         self.assertEqual(''.join([testGrid.grid[i][1] for i in range(5)]), 'SALE*')
 
         self.assertEqual(testGrid.hIntervals, [
@@ -161,19 +161,19 @@ class TestCrosswordGrid(unittest.TestCase):
     def test_getIntervalContent_horizontal(self):
         testGrid = copy.deepcopy(self.grid)
         testGrid.grid[0][0:4] = list('chat')
-        content = testGrid.getIntervalContent(Interval(0, 0, 4, True), True)
+        content = testGrid.getIntervalContent(Interval(0, 0, 4, True))
         self.assertEqual(''.join(content), 'chat')
 
     def test_getIntervalContent_vertical(self):
         testGrid = copy.deepcopy(self.grid)
         for i in range(4):
             testGrid.grid[i][0] = 'chat'[i]
-        content = testGrid.getIntervalContent(Interval(0, 0, 4, True), False)
+        content = testGrid.getIntervalContent(Interval(0, 0, 4, False))
         self.assertEqual(content, 'chat')
 
     def test_findNextInterval(self):
         testGrid = copy.deepcopy(self.grid)
-        interval = testGrid.nextInterval(True)
+        interval = testGrid.nextInterval()
         self.assertEqual(interval, Interval(1, 0, 6, True))
         interval = testGrid.nextInterval(False)
         self.assertEqual(interval, Interval(1, 0, 7, False))
