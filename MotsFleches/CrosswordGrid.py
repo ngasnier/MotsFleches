@@ -1,6 +1,5 @@
 
 from typing import Tuple
-#from IPossible import AllWords
 
 class Interval:
     def __init__(self, offset:int, start:int, end:int, direction:bool):
@@ -19,7 +18,7 @@ class Interval:
         self.start = start
         self.end = end
         self.direction = direction
-        self.possibles = [] 
+        self.possibles = None 
    
     def split(self, pos:int):
         """
@@ -43,11 +42,11 @@ class Interval:
             intervals.append(newInter2)
         return intervals
     
+    @property
     def size(self):
         return self.end-self.start
 
     def __eq__(self, value):
-        #value is Interval and
         return  value.offset==self.offset and value.start==self.start and value.end==self.end and value.direction==self.direction
     
 class CrosswordGrid:

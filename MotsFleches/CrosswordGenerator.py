@@ -1,5 +1,6 @@
 from MotsFleches import Dictionary
-from MotsFleches import CrosswordGrid
+from MotsFleches import CrosswordGrid, Interval
+from MotsFleches import PossibleSet
 
 import random
 import copy
@@ -11,11 +12,16 @@ class CrosswordGenerator:
         self.usedWords = []
         self.debug = False
 
-
     def generateGrid(self, width:int, height:int):
         grid = CrosswordGrid(width, height)
+        self.initPossibles(grid)
         return self.fillGrid(grid, True)
-
+    
+    def initPossibles(self, grid:CrosswordGrid):
+        for interval in grid.hIntervals:
+            interval.possibles = PossibleSet(interval)
+        for interval in grid.vIntervals:
+            interval.possibles = PossibleSet(interval)
 
     def fillGrid(self, grid:CrosswordGrid, horizontal:bool):
         if grid.isGridComplete() and self.isGridValid(grid):
