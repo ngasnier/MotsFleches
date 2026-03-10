@@ -1,6 +1,6 @@
 
 from typing import Tuple
-from IPossible import AllWords
+#from IPossible import AllWords
 
 class Interval:
     def __init__(self, offset:int, start:int, end:int, direction:bool):
