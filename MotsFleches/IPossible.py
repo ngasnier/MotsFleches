@@ -24,6 +24,7 @@ class AllWords(IPossible):
     def makeChoice(self):
         return None
     
+    @property
     def count(self)  -> int:
         return 0
     
@@ -31,9 +32,12 @@ class AllWords(IPossible):
     def isLeaf(self) -> bool:
         return True
     
+    def __str__(self):
+        return f"Allwords({self.size})"
+    
 class SplitInterval(IPossible):
     
-    def __init__(self, interval:Interval, pos:int):
+    def __init__(self, interval:Interval, pos:int, dict:Dictionary):
         if pos<0:
             raise ValueError("pos must be positive.")
         if pos>interval.size-1:
@@ -43,39 +47,55 @@ class SplitInterval(IPossible):
         self.before = None
         self.after = None
 
-        split = interval.split(pos)
+        split = interval.split(interval.start+pos)
 
         for newInterval in split:
             if newInterval.start<pos:
-                self.before = AllWords(newInterval.size) 
+                self.before = AllWords(newInterval.size, dict) 
             else:
-                self.after = PossibleSet(newInterval)
+                if newInterval.size>0:
+                    self.after = PossibleSet(newInterval, dict)
 
     def makeChoice(self):
         return None
     
+    @property
     def count(self)  -> int:
         return 0
 
     @property
     def isLeaf(self) -> bool:
         return False
+    
+    def __str__(self):
+        return f"SplitInterval({self.pos}, {self.before}, {self.after})"
     
 class PossibleSet(IPossible):
-    def __init__(self, interval:Interval):
+    def __init__(self, interval:Interval, dict:Dictionary):
         self.possibles = []
         # TODO : deal with dictionary capabilities (do words of that size exists ?)        
-        self.possibles.append(AllWords(interval.size))
+        self.possibles.append(AllWords(interval.size, dict))
         # Expand with split intervals
         for i in range(interval.size):
-            self.possibles.append(SplitInterval(interval, i))
+            self.possibles.append(SplitInterval(interval, i, dict))
 
     def makeChoice(self):
         return None
     
+    @property
     def count(self)  -> int:
-        return 0
+        return len(self.possibles)
 
     @property
     def isLeaf(self) -> bool:
         return False
+    
+    def __str__(self):
+        str = "["
+        for p in self.possibles:
+            str+=f"{p}"
+        str += "]"
+        return str
+    
+    def __repr__(self):
+        return self.__str__()

@@ -1,6 +1,6 @@
 import unittest
 
-from MotsFleches import Charset
+from MotsFleches import Charset, Dictionary, Interval, PossibleSet
 
 class TestIPossible(unittest.TestCase):
 
@@ -35,3 +35,8 @@ class TestIPossible(unittest.TestCase):
         allLetters.empty()
         self.assertEqual(allLetters.count(), 0)
         
+    def test_PossibleSet(self):
+        dict = Dictionary("dict/test1.txt")
+        interval = Interval(0, 0, 2, True)
+        possibles = PossibleSet(interval, dict)
+        self.assertEqual(possibles.count, 3)

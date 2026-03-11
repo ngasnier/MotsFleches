@@ -45,6 +45,9 @@ class Interval:
     @property
     def size(self):
         return self.end-self.start
+    
+    def __str__(self):
+        return f"[{self.offset, self.start, self.end}]"
 
     def __eq__(self, value):
         return  value.offset==self.offset and value.start==self.start and value.end==self.end and value.direction==self.direction
