@@ -7,6 +7,10 @@ class TestIPossible(unittest.TestCase):
     def setUp(self):
         return
     
+    def test_Str(self):
+        charset = Charset()
+        self.assertEqual(charset.__str__(), "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+        
     def test_Add(self):
         letterA = Charset(Charset.A)
         letterB = Charset(Charset.B)

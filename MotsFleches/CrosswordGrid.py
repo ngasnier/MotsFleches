@@ -1,5 +1,6 @@
 
 from typing import Tuple
+from MotsFleches import Charset
 
 class Interval:
     def __init__(self, offset:int, start:int, end:int, direction:bool):
@@ -57,17 +58,26 @@ class CrosswordGrid:
         self.width = width
         self.height = height
         self.grid = [[' ' for _ in range(width)] for _ in range(height)]
+        self.content = [[Charset() for _ in range(width)] for _ in range(height)]
         self.usedWords = []
 
         # Initialisation des cases noires sur la première ligne et première colonne
         for i in range(0, width, 2):
             if i < width:
                 self.grid[0][i] = '*'
+                self.content[0][i].empty()
         for i in range(0, height, 2):
             if i < height:
                 self.grid[i][0] = '*'
+                self.content[i][0].empty()
 
         self.initIntervals()
+
+    def debugStr(self):
+        grilleFmt = ""
+        for ligne in self.content:
+            grilleFmt += ''.join(f"{ligne}")+"\n"
+        return grilleFmt
 
     def __str__(self):
         """Convert grid to printable string."""
@@ -96,6 +106,7 @@ class CrosswordGrid:
 
             for j, char in enumerate(line):
                 self.grid[i][j] = char
+                self.content[i][j].setLetter(char)
 
         self.initIntervals()
         
@@ -139,6 +150,7 @@ class CrosswordGrid:
             raise ValueError(f"c must be one char, got '{c}' instead.")
 
         self.grid[y][x] = c
+        self.content[y][x].setLetter(c)
 
         self.initIntervals()
 
@@ -148,6 +160,7 @@ class CrosswordGrid:
         
         if interval.direction:
             self.grid[interval.offset][pos] = "*"
+            self.content[interval.offset][pos].empty()
 
             interIdx = self.findContainingIntervalIdx(interval.offset, pos, False)
             if interIdx is not None: 
@@ -159,6 +172,7 @@ class CrosswordGrid:
                         interIdx+=1
         else:
             self.grid[pos][interval.offset] = "*"
+            self.content[pos][interval.offset].empty()
 
             interIdx = self.findContainingIntervalIdx(pos, interval.offset, True)
             if interIdx is not None:
@@ -187,10 +201,13 @@ class CrosswordGrid:
         if interval.direction:
             for col, letter in enumerate(word):
                 self.grid[interval.offset][interval.start + col] = letter
+                self.content[interval.offset][interval.start + col].setLetter(letter)
+
             
         else:
             for row, letter in enumerate(word):
                 self.grid[interval.start+row][interval.offset] = letter
+                self.content[interval.start+row][interval.offset].setLetter(letter)
 
         if definitionAfter:
             self.placeDefinition(interval, interval.start+l, True)
@@ -206,6 +223,15 @@ class CrosswordGrid:
             for j in range(interval.start, interval.end):
                 contenu += self.grid[j][interval.offset]
             return contenu
+        
+    def getIntervalCharset(self, interval:Interval):
+        if interval.direction:
+            return self.content[interval.offset][interval.start:interval.end]
+        else:
+            contenu = ""
+            for j in range(interval.start, interval.end):
+                contenu += self.content[j][interval.offset]
+            return contenu
 
     def nextInterval(self, forceDirection:bool = None):        
         if (forceDirection is not None and forceDirection==True) or forceDirection==None:
@@ -213,7 +239,6 @@ class CrosswordGrid:
                 it = self.hIntervals.pop(0)
                 content = self.getIntervalContent(it)
                 if " " in content:
-
                     return it
         
         if forceDirection is not None and forceDirection==True:

@@ -40,7 +40,11 @@ class Charset:
         self.chars = 0
 
     def setLetter(self, letter:str):
-        if len(str)!=1:
+        self.chars = 0
+        self.addLetter(letter)
+
+    def addLetter(self, letter:str):
+        if len(letter)!=1:
             raise ValueError("setLetter : only strings of one character allowed.")
         self.chars = self.chars | Charset.A if letter=="A" else 0
         self.chars = self.chars | Charset.B if letter=="B" else 0
@@ -112,7 +116,10 @@ class Charset:
         str += "X" if (self.chars & Charset.X)>0 else ""
         str += "Y" if (self.chars & Charset.Y)>0 else ""
         str += "Z" if (self.chars & Charset.Z)>0 else ""
-        return ""
+        return str
+    
+    def __repr__(self):
+        return self.__str__()
 
 class Index:
     def __init__(self, size):

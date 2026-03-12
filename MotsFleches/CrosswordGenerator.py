@@ -20,15 +20,19 @@ class CrosswordGenerator:
     def initPossibles(self, grid:CrosswordGrid):
         for interval in grid.hIntervals:
             interval.possibles = PossibleSet(interval, self.dict)
-            if interval.offset==1:
-                print(interval.possibles)
         for interval in grid.vIntervals:
             interval.possibles = PossibleSet(interval, self.dict)
+
+    def updateConstraints(self, grid:CrosswordGrid):
+        for interval in grid.hIntervals:
+            interval.possibles.update(grid.getIntervalContent(interval))
 
     def fillGrid(self, grid:CrosswordGrid, horizontal:bool):
         if grid.isGridComplete() and self.isGridValid(grid):
             return grid
         else:
+            #self.updateConstraints(grid)
+
             interval = grid.nextInterval(horizontal)
             if interval is None:
                 return None
