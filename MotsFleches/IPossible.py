@@ -3,7 +3,7 @@ from MotsFleches import Dictionary, Charset
 from MotsFleches import Interval
 
 from abc import ABC, abstractmethod
-
+import random
 
 class IPossible(Interval, ABC):
     def makeChoice(self) -> list[IPossible]:
@@ -17,7 +17,7 @@ class IPossible(Interval, ABC):
     def isSet(self) -> bool:
         pass
 
-    def filter(self, content:list[Charset]):
+    def filter(self):
         pass
 
 class AllWords(IPossible):
@@ -33,32 +33,41 @@ class AllWords(IPossible):
     def makeChoice(self) -> list[IPossible]:
         if self.words is None:
             self.queryDictionary()
-        return None
+        if len(self.words)==0:
+            return []
+        word = random.choices(self.words, k=1)[0]
+        self.words.remove(word)
+        return [SetWord(self, word)]
     
     @property
     def count(self) -> int:
+        if self.words is None:
+            self.queryDictionary()
         return len(self.words)
     
     @property
     def isSet(self) -> bool:
         return False
 
-    def filter(self, content:list[Charset]):
-        return
+    def filter(self):
+        self.queryDictionary()
 
     def __str__(self):
-        return f"Allwords({self.size})"
+        content = ""
+        if self.count<10:
+            content = ','.join(self.words)
+        else:
+            content = "{self.count} words"
+        return f"Allwords({self.size}, [{content}])"
 
 class SetWord(IPossible):
     def __init__(self, interval:Interval, word:str):
         Interval.__init__(self, interval.grid, interval.offset, interval.start, interval.end, interval.direction)
         self.size = interval.cellCount
         self.word = word
-        # TODO : penser à mettre à jour le charset/contenu de la grille dans l'algo qque part...
-        #interval.grid.placeWord(interval, word, False)
         
     def makeChoice(self) -> list[IPossible]:
-        return None
+        return [self]
     
     @property
     def count(self) -> int:
@@ -68,7 +77,7 @@ class SetWord(IPossible):
     def isSet(self) -> bool:
         return True
 
-    def filter(self, content:list[Charset]):
+    def filter(self):
         return
 
     def __str__(self):
@@ -98,17 +107,29 @@ class SplitInterval(IPossible):
                     self.after = PossibleSet(newInterval, dict)
 
     def makeChoice(self):
-        return None
+        choice = []
+        if self.before is not None:
+            choice.append(self.before)
+        if self.after is not None:
+            choice.append(self.after)
+        return choice
     
     @property
     def count(self)  -> int:
-        return 0
+        if (self.before is not None and self.before.count==0) or (self.after is not None and self.after.count==0):
+            return 0
+        else:
+            return 1
 
     @property
     def isSet(self) -> bool:
         return False
     
-    def filter(self, content:list[Charset]):
+    def filter(self):
+        if self.before is not None:
+            self.before.filter()
+        if self.after is not None:
+            self.after.filter()
         return    
     
     def __str__(self):
@@ -123,7 +144,11 @@ class PossibleSet(IPossible):
             self.possibles.append(SplitInterval(interval, i, dict))
 
     def makeChoice(self):
-        return None
+        if len(self.possibles)==0:
+            return []
+        choice = random.choices(self.possibles, k=1)[0]
+        self.words.remove(choice[0])
+        return choice
     
     @property
     def count(self)  -> int:
@@ -133,16 +158,19 @@ class PossibleSet(IPossible):
     def isSet(self) -> bool:
         return False
     
-    def filter(self, content:list[Charset]):
+    def filter(self):
         for p in self.possibles:
-            p.filter(content)
+            p.filter()
         
-        self.possibles = filter(lambda p: p.count>0, self.possibles)
+        self.possibles = list(filter(lambda p: p.count>0, self.possibles))
 
     def __str__(self):
         str = "["
         for p in self.possibles:
-            str+=f"{p}"
+            if isinstance(p, PossibleSet):
+                str+=f"PossibleSet({p.count}), "
+            else:
+                str+=f"{p}, "
         str += "]"
         return str
     
