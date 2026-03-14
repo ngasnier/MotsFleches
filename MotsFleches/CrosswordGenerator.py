@@ -12,20 +12,25 @@ class CrosswordGenerator:
         self.usedWords = []
         self.debug = False
 
-    def generateGrid(self, width:int, height:int):
+    def generateGrid(self, width:int, height:int) -> CrosswordGrid:
         grid = CrosswordGrid(width, height)
         self.initPossibles(grid)
         return self.fillGrid(grid, True)
     
     def initPossibles(self, grid:CrosswordGrid):
-        for interval in grid.hIntervals:
-            interval.possibles = PossibleSet(interval, self.dict)
-        for interval in grid.vIntervals:
-            interval.possibles = PossibleSet(interval, self.dict)
+        for i, interval in enumerate(grid.hIntervals):
+            grid.hIntervals[i] = PossibleSet(interval, self.dict)
+        for i, interval in enumerate(grid.vIntervals):
+            grid.vIntervals[i] = PossibleSet(interval, self.dict)
+        return
 
     def updateConstraints(self, grid:CrosswordGrid):
         for interval in grid.hIntervals:
-            interval.possibles.update(grid.getIntervalContent(interval))
+            if interval.possibles is not None:
+                interval.possibles.filter(grid.getIntervalCharset(interval))
+        for interval in grid.vIntervals:
+            if interval.possibles is not None:
+                interval.possibles.filter(grid.getIntervalCharset(interval))
 
     def fillGrid(self, grid:CrosswordGrid, horizontal:bool):
         if grid.isGridComplete() and self.isGridValid(grid):
@@ -36,7 +41,7 @@ class CrosswordGenerator:
             interval = grid.nextInterval(horizontal)
             if interval is None:
                 return None
-            intervalSize = interval.size
+            intervalSize = interval.cellCount
             if intervalSize<1:
                 return None
             

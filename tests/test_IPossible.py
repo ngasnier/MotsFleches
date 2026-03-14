@@ -1,46 +1,32 @@
 import unittest
 
-from MotsFleches import Charset, Dictionary, Interval, PossibleSet
+from MotsFleches import Charset, Dictionary, Interval, CrosswordGrid, AllWords, PossibleSet
 
 class TestIPossible(unittest.TestCase):
 
     def setUp(self):
         return
     
-    def test_Str(self):
-        charset = Charset()
-        self.assertEqual(charset.__str__(), "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-        
-    def test_Add(self):
-        letterA = Charset(Charset.A)
-        letterB = Charset(Charset.B)
-        letterA.add(letterB)
-        self.assertEqual(letterA.chars, 3)
-        
-    def test_Remove(self):
-        allLetters = Charset()
-        letterB = Charset(Charset.B)
-        allLetters.remove(letterB)
-        self.assertEqual(allLetters.chars, 0b11111111111111111111111101)
+    def test_AllWords(self):
+        dic = Dictionary("dict/test1.txt")
+        grid = CrosswordGrid(6, 7)
+        interval = grid.hIntervals[0]
+        wordp = AllWords(interval, dic)
 
-    def test_Insersect(self):
-        allLetters = Charset()
-        letterB = Charset(Charset.B)
-        allLetters.intersect(letterB)
-        self.assertEqual(allLetters.chars, 0b00000000000000000000000010)
+        # Chack basic interaction with grid and dictionary
+        wordp.queryDictionary()
+        self.assertEqual(wordp.words, ["LASERS", "TOLIER"])
 
-    def test_Count(self):
-        allLetters = Charset()
-        self.assertEqual(allLetters.count(), 26)
-        letterA = Charset(Charset.A)
-        letterB = Charset(Charset.B)
-        letterA.add(letterB)
-        self.assertEqual(letterA.count(), 2)
-        allLetters.empty()
-        self.assertEqual(allLetters.count(), 0)
-        
+        grid.placeWord("BARONNE", grid.vIntervals[0], False)
+        wordp.queryDictionary()
+        self.assertEqual(wordp.words, ["LASERS"])
+
+        # Test MakeChoice and others methods...
+
+            
     def test_PossibleSet(self):
+        grid = CrosswordGrid(6, 7)
         dict = Dictionary("dict/test1.txt")
-        interval = Interval(0, 0, 2, True)
+        interval = Interval(grid, 0, 0, 2, True)
         possibles = PossibleSet(interval, dict)
         self.assertEqual(possibles.count, 3)

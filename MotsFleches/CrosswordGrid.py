@@ -1,9 +1,9 @@
-
+from __future__ import annotations
 from typing import Tuple
 from MotsFleches import Charset
 
 class Interval:
-    def __init__(self, offset:int, start:int, end:int, direction:bool):
+    def __init__(self, grid:CrosswordGrid, offset:int, start:int, end:int, direction:bool):
         """
         Parameters
         ----------
@@ -15,11 +15,12 @@ class Interval:
             end index of the interval in the row or column indicated by offset.
             convention is that the interval stop at index end-1.
         """
+        self.grid = grid
         self.offset = offset
         self.start = start
         self.end = end
         self.direction = direction
-        self.possibles = None 
+        self.content = grid.getIntervalCharset(self)
    
     def split(self, pos:int):
         """
@@ -34,8 +35,8 @@ class Interval:
         array of Interval. Only intervals of at least one cell are returned.
         """
         newStart = pos+1
-        newInter1 = Interval(self.offset, self.start, pos, self.direction)
-        newInter2 = Interval(self.offset, newStart, self.end, self.direction)
+        newInter1 = Interval(self.grid, self.offset, self.start, pos, self.direction)
+        newInter2 = Interval(self.grid, self.offset, newStart, self.end, self.direction)
         intervals = [  ]
         if pos-self.start>0:
             intervals.append(newInter1)
@@ -44,7 +45,7 @@ class Interval:
         return intervals
     
     @property
-    def size(self):
+    def cellCount(self):
         return self.end-self.start
     
     def __str__(self):
@@ -120,11 +121,11 @@ class CrosswordGrid:
                     curInter += self.grid[j][i]
                 else:
                     if len(curInter)>1 and " " in curInter:
-                        self.hIntervals.append(Interval(j, curStart, curStart+len(curInter), True))
+                        self.hIntervals.append(Interval(self, j, curStart, curStart+len(curInter), True))
                     curStart = i+1
                     curInter = ""
             if len(curInter)>1 and " " in curInter:
-                self.hIntervals.append(Interval(j, curStart, curStart+len(curInter), True))
+                self.hIntervals.append(Interval(self, j, curStart, curStart+len(curInter), True))
 
         self.vIntervals = []
         for i in range(self.width):
@@ -135,11 +136,11 @@ class CrosswordGrid:
                     curInter += self.grid[j][i]
                 else:
                     if len(curInter)>1 and " " in curInter:
-                        self.vIntervals.append(Interval(i, curStart, curStart+len(curInter), False))
+                        self.vIntervals.append(Interval(self, i, curStart, curStart+len(curInter), False))
                     curStart = j+1
                     curInter = ""
             if len(curInter)>1 and " " in curInter:
-                self.vIntervals.append(Interval(i, curStart, curStart+len(curInter), False))
+                self.vIntervals.append(Interval(self, i, curStart, curStart+len(curInter), False))
 
     def put(self, x:int, y:int, c:str):
         if x<0 or x>=self.width:
@@ -201,9 +202,7 @@ class CrosswordGrid:
         if interval.direction:
             for col, letter in enumerate(word):
                 self.grid[interval.offset][interval.start + col] = letter
-                self.content[interval.offset][interval.start + col].setLetter(letter)
-
-            
+                self.content[interval.offset][interval.start + col].setLetter(letter)       
         else:
             for row, letter in enumerate(word):
                 self.grid[interval.start+row][interval.offset] = letter
@@ -228,9 +227,9 @@ class CrosswordGrid:
         if interval.direction:
             return self.content[interval.offset][interval.start:interval.end]
         else:
-            contenu = ""
+            contenu = []
             for j in range(interval.start, interval.end):
-                contenu += self.content[j][interval.offset]
+                contenu.append(self.content[j][interval.offset])
             return contenu
 
     def nextInterval(self, forceDirection:bool = None):        

@@ -46,32 +46,32 @@ class Charset:
     def addLetter(self, letter:str):
         if len(letter)!=1:
             raise ValueError("setLetter : only strings of one character allowed.")
-        self.chars = self.chars | Charset.A if letter=="A" else 0
-        self.chars = self.chars | Charset.B if letter=="B" else 0
-        self.chars = self.chars | Charset.C if letter=="C" else 0
-        self.chars = self.chars | Charset.D if letter=="D" else 0
-        self.chars = self.chars | Charset.E if letter=="E" else 0
-        self.chars = self.chars | Charset.F if letter=="F" else 0
-        self.chars = self.chars | Charset.G if letter=="G" else 0
-        self.chars = self.chars | Charset.H if letter=="H" else 0
-        self.chars = self.chars | Charset.I if letter=="I" else 0
-        self.chars = self.chars | Charset.J if letter=="J" else 0
-        self.chars = self.chars | Charset.K if letter=="K" else 0
-        self.chars = self.chars | Charset.L if letter=="L" else 0
-        self.chars = self.chars | Charset.M if letter=="M" else 0
-        self.chars = self.chars | Charset.N if letter=="N" else 0
-        self.chars = self.chars | Charset.O if letter=="O" else 0
-        self.chars = self.chars | Charset.P if letter=="P" else 0
-        self.chars = self.chars | Charset.Q if letter=="Q" else 0
-        self.chars = self.chars | Charset.R if letter=="R" else 0
-        self.chars = self.chars | Charset.S if letter=="S" else 0
-        self.chars = self.chars | Charset.T if letter=="T" else 0
-        self.chars = self.chars | Charset.U if letter=="U" else 0
-        self.chars = self.chars | Charset.V if letter=="V" else 0
-        self.chars = self.chars | Charset.W if letter=="W" else 0
-        self.chars = self.chars | Charset.X if letter=="X" else 0
-        self.chars = self.chars | Charset.Y if letter=="Y" else 0
-        self.chars = self.chars | Charset.Z if letter=="Z" else 0
+        self.chars = self.chars | (Charset.A if letter=="A" else 0)
+        self.chars = self.chars | (Charset.B if letter=="B" else 0)
+        self.chars = self.chars | (Charset.C if letter=="C" else 0)
+        self.chars = self.chars | (Charset.D if letter=="D" else 0)
+        self.chars = self.chars | (Charset.E if letter=="E" else 0)
+        self.chars = self.chars | (Charset.F if letter=="F" else 0)
+        self.chars = self.chars | (Charset.G if letter=="G" else 0)
+        self.chars = self.chars | (Charset.H if letter=="H" else 0)
+        self.chars = self.chars | (Charset.I if letter=="I" else 0)
+        self.chars = self.chars | (Charset.J if letter=="J" else 0)
+        self.chars = self.chars | (Charset.K if letter=="K" else 0)
+        self.chars = self.chars | (Charset.L if letter=="L" else 0)
+        self.chars = self.chars | (Charset.M if letter=="M" else 0)
+        self.chars = self.chars | (Charset.N if letter=="N" else 0)
+        self.chars = self.chars | (Charset.O if letter=="O" else 0)
+        self.chars = self.chars | (Charset.P if letter=="P" else 0)
+        self.chars = self.chars | (Charset.Q if letter=="Q" else 0)
+        self.chars = self.chars | (Charset.R if letter=="R" else 0)
+        self.chars = self.chars | (Charset.S if letter=="S" else 0)
+        self.chars = self.chars | (Charset.T if letter=="T" else 0)
+        self.chars = self.chars | (Charset.U if letter=="U" else 0)
+        self.chars = self.chars | (Charset.V if letter=="V" else 0)
+        self.chars = self.chars | (Charset.W if letter=="W" else 0)
+        self.chars = self.chars | (Charset.X if letter=="X" else 0)
+        self.chars = self.chars | (Charset.Y if letter=="Y" else 0)
+        self.chars = self.chars | (Charset.Z if letter=="Z" else 0)
 
     def add(self, other:Charset):
         self.chars = self.chars | other.chars
@@ -219,7 +219,31 @@ class Dictionary:
             words = [w for w in self.indexBySize[size].queryAllWords()]
             index[word] = words
         return len(words)>0
-            
+    
+    def query(self, charset:list[Charset], exclusions=[]):
+        self.nbLookups += 1
+        patSize = len(charset)
+        pattern = ''.join([f"[{cs}]" for cs in charset])
+        cache = self.cacheBySize[patSize]
+        words = cache.get(pattern, None)
+        if words is None: # Lazy caching of searches
+            self.nbCacheMiss+=1
+
+            index = self.indexBySize[patSize]
+            bestResult = index.queryAllWords()
+            bestResultCount = 1000000
+            for pos in range(patSize):
+                if charset[pos].count()==1:
+                    result = index.query(pos, charset[pos].__str__())
+                    if len(result)<bestResultCount:
+                        bestResult = result
+                        bestResultCount = len(result)
+
+            regexp = re.compile(f'^{pattern}$')
+            words = list(filter(regexp.match, bestResult))
+            cache[pattern] = words
+        return [w for w in words if w not in exclusions]
+
     def findCandidates(self, placeholder:str, exclusions=[], exactLength:bool=False):
         """
         Return candidates of length between 2 and len(placeholder)
