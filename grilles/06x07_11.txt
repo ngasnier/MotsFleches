@@ -1,0 +1,12 @@
+loading...
+generating...
+*A*B*V
+UNIEME
+*NOTER
+KADAR*
+*LU*LA
+PERRIN
+*SEINS
+
+Nb lookups :  536597
+Nb cache miss :  1012

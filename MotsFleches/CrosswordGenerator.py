@@ -90,17 +90,15 @@ class CrosswordGenerator:
 
     def updateConstraints(self, grid:CrosswordGrid):
         for interval in grid.hIntervals:
-            if interval.possibles is not None:
-                interval.possibles.filter(grid.getIntervalCharset(interval))
+            interval.filter()
         for interval in grid.vIntervals:
-            if interval.possibles is not None:
-                interval.possibles.filter(grid.getIntervalCharset(interval))
+            interval.filter()
 
     def fillGrid(self, grid:CrosswordGrid, horizontal:bool):
         if grid.isGridComplete() and self.isGridValid(grid):
             return grid
         else:
-            #self.updateConstraints(grid)
+            self.updateConstraints(grid)
 
             interval = grid.nextInterval(horizontal)
             if interval is None:
@@ -140,16 +138,12 @@ class CrosswordGenerator:
     def isGridValid(self, grid):
         # Remaining horizontal intervals must have word candidates
         for interval in grid.hIntervals:
-            intervalContent = grid.getIntervalContent(interval)
-            candidates = self.dict.findCandidates(''.join(intervalContent), grid.usedWords)
-            if len(candidates)==0:
+            if interval.count==0:
                 return False
 
         # Remaining vertical intervals must have word candidates
         for interval in grid.vIntervals:
-            intervalContent = grid.getIntervalContent(interval)
-            candidates = self.dict.findCandidates(''.join(intervalContent), grid.usedWords)
-            if len(candidates)==0:
+            if interval.count==0:
                 return False
         
         # Check that we don't have isolated letters or empty cells

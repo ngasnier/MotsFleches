@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Tuple
-from MotsFleches import Charset
+from MotsFleches import Charset, Interval
 
    
 class CrosswordGrid:
@@ -173,20 +173,17 @@ class CrosswordGrid:
 
     def nextInterval(self, forceDirection:bool = None):        
         if (forceDirection is not None and forceDirection==True) or forceDirection==None:
-            while len(self.hIntervals)>0:                
-                it = self.hIntervals.pop(0)
-                content = self.getIntervalContent(it)
-                if " " in content:
-                    return it
+            for interval in self.hIntervals:
+                if not interval.isSet:
+                    return interval
         
         if forceDirection is not None and forceDirection==True:
             return None
 
-        while len(self.vIntervals)>0:
-            it = self.vIntervals.pop(0)
-            content = self.getIntervalContent(it)
-            if " " in content:
-                return it
+        for interval in self.vIntervals:
+            if not interval.isSet:
+               return interval
+
         return None
         
     def findContainingIntervalIdx(self, line:int, col:int, horizontal:bool):
