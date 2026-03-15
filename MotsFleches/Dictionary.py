@@ -43,6 +43,9 @@ class Charset:
         self.chars = 0
         self.addLetter(letter)
 
+    def setAllLetters(self):
+        self.chars = Charset.ALL_LETTERS
+
     def addLetter(self, letter:str):
         if len(letter)!=1:
             raise ValueError("setLetter : only strings of one character allowed.")
@@ -88,7 +91,8 @@ class Charset:
         i = (i * 0x01010101) & 0xffffffff               # horizontal sum of bytes
         return  i >> 24; 
 
-    def __str__(self):
+    @property
+    def letters(self):
         str = ""
         str += "A" if (self.chars & Charset.A)>0 else ""
         str += "B" if (self.chars & Charset.B)>0 else ""
@@ -117,6 +121,13 @@ class Charset:
         str += "Y" if (self.chars & Charset.Y)>0 else ""
         str += "Z" if (self.chars & Charset.Z)>0 else ""
         return str
+    
+    def __str__(self):
+        if self.chars==0:
+            return "*"
+        if self.chars==Charset.ALL_LETTERS:
+            return " "
+        return self.letters
     
     def __repr__(self):
         return self.__str__()
@@ -223,7 +234,7 @@ class Dictionary:
     def query(self, charset:list[Charset], exclusions=[]):
         self.nbLookups += 1
         patSize = len(charset)
-        pattern = ''.join([f"[{cs}]" for cs in charset])
+        pattern = ''.join([f"[{cs.letters}]" for cs in charset])
         cache = self.cacheBySize[patSize]
         words = cache.get(pattern, None)
         if words is None: # Lazy caching of searches

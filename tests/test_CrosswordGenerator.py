@@ -37,6 +37,7 @@ class TestCrosswordGenerator(unittest.TestCase):
 
     def test_isValid_intermediate(self):
         grid = CrosswordGrid(6, 7)
+        self.generator.initGridTemplate(grid)
         inter = grid.nextInterval(True)
         grid.placeWord('LASERS', inter, True)
         inter = grid.nextInterval(False)
@@ -45,12 +46,14 @@ class TestCrosswordGenerator(unittest.TestCase):
 
     def test_isValid_no_choice_vertical(self):
         grid = CrosswordGrid(6, 7)
+        self.generator.initGridTemplate(grid)
         inter = grid.nextInterval(True)
         grid.placeWord('XXXXXX', inter, True)
         self.assertFalse(self.generator.isGridValid(grid))
 
     def test_isValid_no_choice_horizontal(self):
         grid = CrosswordGrid(6, 7)
+        self.generator.initGridTemplate(grid)
         inter = grid.nextInterval(False)
         grid.placeWord('XXXXXXX', inter, False)
         self.assertFalse(self.generator.isGridValid(grid))
@@ -58,38 +61,43 @@ class TestCrosswordGenerator(unittest.TestCase):
     def test_isValid_isolatedCell(self):
         # On top
         grid = CrosswordGrid(6, 7)
-        grid.setGridContent(self.emptyContent)
+        self.generator.setGridContent(grid, self.emptyContent)
         grid.put(3, 1, "*")
+        self.generator.initIntervals(grid)
         self.assertFalse(self.generator.isGridValid(grid))
         
         # On bottom
         grid = CrosswordGrid(6, 7)
-        grid.setGridContent(self.emptyContent)
+        self.generator.setGridContent(grid, self.emptyContent)
         grid.put(1, 5, "*")
         grid.put(2, 6, "*")
+        self.generator.initIntervals(grid)
         self.assertFalse(self.generator.isGridValid(grid))
 
         # On left
         grid = CrosswordGrid(6, 7)
-        grid.setGridContent(self.emptyContent)
+        self.generator.setGridContent(grid, self.emptyContent)
         grid.put(1, 1, "*")
+        self.generator.initIntervals(grid)
         self.assertFalse(self.generator.isGridValid(grid))
         
         # On right
         grid = CrosswordGrid(6, 7)
-        grid.setGridContent(self.emptyContent)
+        self.generator.setGridContent(grid, self.emptyContent)
         grid.put(5, 2, "*")
         grid.put(4, 3, "*")
         grid.put(5, 4, "*")
+        self.generator.initIntervals(grid)
         self.assertFalse(self.generator.isGridValid(grid))
 
         # In middle
         grid = CrosswordGrid(6, 7)
-        grid.setGridContent(self.emptyContent)
+        self.generator.setGridContent(grid, self.emptyContent)
         grid.put(3, 2, "*")
         grid.put(2, 3, "*")
         grid.put(4, 3, "*")
         grid.put(3, 4, "*")
+        self.generator.initIntervals(grid)
         self.assertFalse(self.generator.isGridValid(grid))
 
     def test_isValid_definitionRules(self):
@@ -108,31 +116,36 @@ class TestCrosswordGenerator(unittest.TestCase):
         #  [*] [ ]
         #      [ ]
         grid = CrosswordGrid(6, 7)
-        grid.setGridContent(fullEmpty)
+        self.generator.setGridContent(grid, fullEmpty)
         grid.put(4, 0, "*")
+        self.generator.initIntervals(grid)
         self.assertTrue(self.generator.isGridValid(grid))
 
         grid = CrosswordGrid(6, 7)
-        grid.setGridContent(fullEmpty)
+        self.generator.setGridContent(grid, fullEmpty)
         grid.put(4, 6, "*")
+        self.generator.initIntervals(grid)
         self.assertFalse(self.generator.isGridValid(grid))
 
         grid = CrosswordGrid(6, 7)
-        grid.setGridContent(fullEmpty)
+        self.generator.setGridContent(grid, fullEmpty)
         grid.put(4, 5, "*")
+        self.generator.initIntervals(grid)
         self.assertFalse(self.generator.isGridValid(grid))
 
 
         # Check this kind at various positions
         #  [*] [ ] [ ]
         grid = CrosswordGrid(6, 7)
-        grid.setGridContent(fullEmpty)
+        self.generator.setGridContent(grid, fullEmpty)
         grid.put(3, 6, "*")
+        self.generator.initIntervals(grid)
         self.assertTrue(self.generator.isGridValid(grid))
 
         grid = CrosswordGrid(6, 7)
-        grid.setGridContent(fullEmpty)
+        self.generator.setGridContent(grid, fullEmpty)
         grid.put(4, 6, "*")
+        self.generator.initIntervals(grid)
         self.assertFalse(self.generator.isGridValid(grid))
 
         # Check this kind at various positions
@@ -140,27 +153,31 @@ class TestCrosswordGenerator(unittest.TestCase):
         #  [ ]
         #  [ ]
         grid = CrosswordGrid(6, 7)
-        grid.setGridContent(fullEmpty)
+        self.generator.setGridContent(grid, fullEmpty)
         grid.put(4, 4, "*")
+        self.generator.initIntervals(grid)
         self.assertTrue(self.generator.isGridValid(grid))
 
         grid = CrosswordGrid(6, 7)
-        grid.setGridContent(fullEmpty)
+        self.generator.setGridContent(grid, fullEmpty)
         grid.put(4, 5, "*")
+        self.generator.initIntervals(grid)
         self.assertFalse(self.generator.isGridValid(grid))
 
         # Check this kind at various positions
         #    [*] 
         #  * [ ] [ ] (left or *)
         grid = CrosswordGrid(6, 7)
-        grid.setGridContent(fullEmpty)
+        self.generator.setGridContent(grid, fullEmpty)
         grid.put(1, 5, "*")
         grid.put(0, 6, "*")
+        self.generator.initIntervals(grid)
         self.assertTrue(self.generator.isGridValid(grid))
 
         grid = CrosswordGrid(6, 7)
-        grid.setGridContent(fullEmpty)
+        self.generator.setGridContent(grid, fullEmpty)
         grid.put(5, 5, "*")
+        self.generator.initIntervals(grid)
         self.assertFalse(self.generator.isGridValid(grid))
 
 

@@ -50,7 +50,7 @@ class TestDictionary(unittest.TestCase):
 
     def test_Str(self):
         charset = Charset()
-        self.assertEqual(charset.__str__(), "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+        self.assertEqual(charset.__str__(), " ")
         
     def test_Add(self):
         letterA = Charset(Charset.A)

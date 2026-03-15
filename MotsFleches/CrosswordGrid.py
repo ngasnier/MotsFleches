@@ -2,58 +2,7 @@ from __future__ import annotations
 from typing import Tuple
 from MotsFleches import Charset
 
-class Interval:
-    def __init__(self, grid:CrosswordGrid, offset:int, start:int, end:int, direction:bool):
-        """
-        Parameters
-        ----------
-        offset : int
-            grid or row index of the interval relative to the grid.
-        start : int
-            start index of the interval in the row or column indicated by offset
-        end : int
-            end index of the interval in the row or column indicated by offset.
-            convention is that the interval stop at index end-1.
-        """
-        self.grid = grid
-        self.offset = offset
-        self.start = start
-        self.end = end
-        self.direction = direction
-        self.content = grid.getIntervalCharset(self)
    
-    def split(self, pos:int):
-        """
-        Split interval by a definition cell.
-
-        Parameters
-        ---------
-        pos : the position of the definition cell, relative to the grid.
-
-        Returns
-        -------
-        array of Interval. Only intervals of at least one cell are returned.
-        """
-        newStart = pos+1
-        newInter1 = Interval(self.grid, self.offset, self.start, pos, self.direction)
-        newInter2 = Interval(self.grid, self.offset, newStart, self.end, self.direction)
-        intervals = [  ]
-        if pos-self.start>0:
-            intervals.append(newInter1)
-        if self.end-newStart>0:
-            intervals.append(newInter2)
-        return intervals
-    
-    @property
-    def cellCount(self):
-        return self.end-self.start
-    
-    def __str__(self):
-        return f"[{self.offset, self.start, self.end}]"
-
-    def __eq__(self, value):
-        return  value.offset==self.offset and value.start==self.start and value.end==self.end and value.direction==self.direction
-    
 class CrosswordGrid:
     def __init__(self, width:int, height:int):
         self.width = width
@@ -61,18 +10,8 @@ class CrosswordGrid:
         self.grid = [[' ' for _ in range(width)] for _ in range(height)]
         self.content = [[Charset() for _ in range(width)] for _ in range(height)]
         self.usedWords = []
-
-        # Initialisation des cases noires sur la première ligne et première colonne
-        for i in range(0, width, 2):
-            if i < width:
-                self.grid[0][i] = '*'
-                self.content[0][i].empty()
-        for i in range(0, height, 2):
-            if i < height:
-                self.grid[i][0] = '*'
-                self.content[i][0].empty()
-
-        self.initIntervals()
+        self.hIntervals = []
+        self.vIntervals = []
 
     def debugStr(self):
         grilleFmt = ""
@@ -97,50 +36,50 @@ class CrosswordGrid:
                     return False
         return True
 
-    def setGridContent(self, content:list[str]):
-        if len(content) != self.height:
-            raise ValueError(f"Number of rows must be {self.height}, but {len(content)} rows provided.")
+#    def setGridContent(self, content:list[str]):
+#        if len(content) != self.height:
+    #         raise ValueError(f"Number of rows must be {self.height}, but {len(content)} rows provided.")
 
-        for i, line in enumerate(content):
-            if len(line) != self.width:
-                raise ValueError(f"Row {i} must have {self.width} characters, but {len(line)} provided.")
+    #     for i, line in enumerate(content):
+    #         if len(line) != self.width:
+    #             raise ValueError(f"Row {i} must have {self.width} characters, but {len(line)} provided.")
 
-            for j, char in enumerate(line):
-                self.grid[i][j] = char
-                self.content[i][j].setLetter(char)
+    #         for j, char in enumerate(line):
+    #             self.grid[i][j] = char
+    #             self.content[i][j].setLetter(char)
 
-        self.initIntervals()
+    #     self.initIntervals()
         
-    def initIntervals(self):
-        self.hIntervals = []
-        for j in range(self.height):
-            curInter = ""
-            curStart = 0
-            for i in range(self.width):
-                if self.grid[j][i] not in "*#":
-                    curInter += self.grid[j][i]
-                else:
-                    if len(curInter)>1 and " " in curInter:
-                        self.hIntervals.append(Interval(self, j, curStart, curStart+len(curInter), True))
-                    curStart = i+1
-                    curInter = ""
-            if len(curInter)>1 and " " in curInter:
-                self.hIntervals.append(Interval(self, j, curStart, curStart+len(curInter), True))
+    # def initIntervals(self):
+    #     self.hIntervals = []
+    #     for j in range(self.height):
+    #         curInter = ""
+    #         curStart = 0
+    #         for i in range(self.width):
+    #             if self.grid[j][i] not in "*#":
+    #                 curInter += self.grid[j][i]
+    #             else:
+    #                 if len(curInter)>1 and " " in curInter:
+    #                     self.hIntervals.append(Interval(self, j, curStart, curStart+len(curInter), True))
+    #                 curStart = i+1
+    #                 curInter = ""
+    #         if len(curInter)>1 and " " in curInter:
+    #             self.hIntervals.append(Interval(self, j, curStart, curStart+len(curInter), True))
 
-        self.vIntervals = []
-        for i in range(self.width):
-            curInter = ""
-            curStart = 0
-            for j in range(self.height):
-                if self.grid[j][i] not in "*#":
-                    curInter += self.grid[j][i]
-                else:
-                    if len(curInter)>1 and " " in curInter:
-                        self.vIntervals.append(Interval(self, i, curStart, curStart+len(curInter), False))
-                    curStart = j+1
-                    curInter = ""
-            if len(curInter)>1 and " " in curInter:
-                self.vIntervals.append(Interval(self, i, curStart, curStart+len(curInter), False))
+    #     self.vIntervals = []
+    #     for i in range(self.width):
+    #         curInter = ""
+    #         curStart = 0
+    #         for j in range(self.height):
+    #             if self.grid[j][i] not in "*#":
+    #                 curInter += self.grid[j][i]
+    #             else:
+    #                 if len(curInter)>1 and " " in curInter:
+    #                     self.vIntervals.append(Interval(self, i, curStart, curStart+len(curInter), False))
+    #                 curStart = j+1
+    #                 curInter = ""
+    #         if len(curInter)>1 and " " in curInter:
+    #             self.vIntervals.append(Interval(self, i, curStart, curStart+len(curInter), False))
 
     def put(self, x:int, y:int, c:str):
         if x<0 or x>=self.width:
@@ -153,7 +92,7 @@ class CrosswordGrid:
         self.grid[y][x] = c
         self.content[y][x].setLetter(c)
 
-        self.initIntervals()
+        #self.initIntervals()
 
     def placeDefinition(self, interval:Interval, pos: int, ignoreStart:bool=False):
         if pos<0 or pos>=interval.end:

@@ -14,15 +14,79 @@ class CrosswordGenerator:
 
     def generateGrid(self, width:int, height:int) -> CrosswordGrid:
         grid = CrosswordGrid(width, height)
-        self.initPossibles(grid)
+        self.initGridTemplate(grid)
         return self.fillGrid(grid, True)
     
-    def initPossibles(self, grid:CrosswordGrid):
-        for i, interval in enumerate(grid.hIntervals):
-            grid.hIntervals[i] = PossibleSet(interval, self.dict)
-        for i, interval in enumerate(grid.vIntervals):
-            grid.vIntervals[i] = PossibleSet(interval, self.dict)
-        return
+    def initGridTemplate(self, grid:CrosswordGrid):
+        """
+        Init grid for crossword-style template with definitions on first row and column.
+
+        Parameters
+        ----------
+        grid : the grid to initialize
+        """
+        for i in range(0, grid.width, 2):
+            if i < grid.width:
+                grid.grid[0][i] = '*'
+                grid.content[0][i].empty()
+        for i in range(0, grid.height, 2):
+            if i < grid.height:
+                grid.grid[i][0] = '*'
+                grid.content[i][0].empty()
+
+        self.initIntervals(grid)
+    
+    def setGridContent(self, grid:CrosswordGrid, content:list[str]):
+        if len(content) != grid.height:
+            raise ValueError(f"Number of rows must be {grid.height}, but {len(content)} rows provided.")
+
+        for i, line in enumerate(content):
+            if len(line) != grid.width:
+                raise ValueError(f"Row {i} must have {grid.width} characters, but {len(line)} provided.")
+
+            for j, char in enumerate(line):
+                grid.grid[i][j] = char
+                if char not in " #*":
+                    grid.content[i][j].setLetter(char)
+                else:
+                    if char==" ":
+                        grid.content[i][j].setAllLetters()
+                    else:
+                        grid.content[i][j].empty()
+
+        self.initIntervals(grid)
+
+    def initIntervals(self, grid:CrosswordGrid):
+        grid.hIntervals = []
+        for j in range(grid.height):
+            curInter = ""
+            curStart = 0
+            for i in range(grid.width):
+                if grid.grid[j][i] not in "*#":
+                    curInter += grid.grid[j][i]
+                else:
+                    if len(curInter)>1 and " " in curInter:
+                        grid.hIntervals.append(PossibleSet(Interval(grid, j, curStart, curStart+len(curInter), True),  self.dict))
+                    curStart = i+1
+                    curInter = ""
+            if len(curInter)>1 and " " in curInter:
+                grid.hIntervals.append(PossibleSet(Interval(grid, j, curStart, curStart+len(curInter), True), self.dict))
+
+        grid.vIntervals = []
+        for i in range(grid.width):
+            curInter = ""
+            curStart = 0
+            for j in range(grid.height):
+                if grid.grid[j][i] not in "*#":
+                    curInter += grid.grid[j][i]
+                else:
+                    if len(curInter)>1 and " " in curInter:
+                        grid.vIntervals.append(PossibleSet(Interval(grid, i, curStart, curStart+len(curInter), False), self.dict))
+                    curStart = j+1
+                    curInter = ""
+            if len(curInter)>1 and " " in curInter:
+                grid.vIntervals.append(PossibleSet(Interval(grid, i, curStart, curStart+len(curInter), False), self.dict))
+    
 
     def updateConstraints(self, grid:CrosswordGrid):
         for interval in grid.hIntervals:

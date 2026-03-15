@@ -1,6 +1,6 @@
 import unittest
 
-from MotsFleches import Charset, Dictionary, Interval, CrosswordGrid, AllWords, SetWord, SplitInterval, PossibleSet
+from MotsFleches import Charset, Dictionary, Interval, CrosswordGrid, AllWords, SetWord, SplitInterval, PossibleSet, CrosswordGenerator
 
 class TestIPossible(unittest.TestCase):
 
@@ -9,7 +9,9 @@ class TestIPossible(unittest.TestCase):
     
     def test_AllWords(self):
         dic = Dictionary("dict/test1.txt")
+        generator = CrosswordGenerator(dic)
         grid = CrosswordGrid(6, 7)
+        generator.initGridTemplate(grid)
         interval = grid.hIntervals[0]
         wordp = AllWords(interval, dic)
 
@@ -23,6 +25,7 @@ class TestIPossible(unittest.TestCase):
 
         # Test MakeChoice and others methods...
         grid = CrosswordGrid(6, 7)
+        generator.initGridTemplate(grid)
         interval = grid.hIntervals[1]
         wordp = AllWords(interval, dic)
         self.assertEqual(wordp.count, 2)
@@ -34,15 +37,19 @@ class TestIPossible(unittest.TestCase):
     
     def testSplitInterval(self):
         dic = Dictionary("dict/test1.txt")
+        generator = CrosswordGenerator(dic)
         grid = CrosswordGrid(6, 7)
+        generator.initGridTemplate(grid)
         interval = grid.hIntervals[0]
         split = SplitInterval(interval, 2, dic)
         self.assertEqual(split.count, 1)
 
     def test_PossibleSet(self):
         # Check initialisation 
-        grid = CrosswordGrid(6, 7)
         dict = Dictionary("dict/test1.txt")
+        generator = CrosswordGenerator(dict)
+        grid = CrosswordGrid(6, 7)
+        generator.initGridTemplate(grid)
         interval = Interval(grid, 0, 0, 2, True)
         possibles = PossibleSet(interval, dict)
         self.assertEqual(possibles.count, 3)

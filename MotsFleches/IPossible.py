@@ -1,10 +1,62 @@
 from __future__ import annotations # Urk... why is that necessary... Python is a strange language...
-from MotsFleches import Dictionary, Charset
-from MotsFleches import Interval
+from MotsFleches import CrosswordGrid, Dictionary, Charset
 
 from abc import ABC, abstractmethod
 import random
 
+class Interval(ABC):
+    def __init__(self, grid:CrosswordGrid, offset:int, start:int, end:int, direction:bool):
+        """
+        Parameters
+        ----------
+        offset : int
+            grid or row index of the interval relative to the grid.
+        start : int
+            start index of the interval in the row or column indicated by offset
+        end : int
+            end index of the interval in the row or column indicated by offset.
+            convention is that the interval stop at index end-1.
+        """
+        self.grid = grid
+        self.offset = offset
+        self.start = start
+        self.end = end
+        self.direction = direction
+        self.content = grid.getIntervalCharset(self)
+   
+    def split(self, pos:int):
+        """
+        Split interval by a definition cell.
+
+        Parameters
+        ---------
+        pos : the position of the definition cell, relative to the grid.
+
+        Returns
+        -------
+        array of Interval. Only intervals of at least one cell are returned.
+        """
+        newStart = pos+1
+        newInter1 = Interval(self.grid, self.offset, self.start, pos, self.direction)
+        newInter2 = Interval(self.grid, self.offset, newStart, self.end, self.direction)
+        intervals = [  ]
+        if pos-self.start>0:
+            intervals.append(newInter1)
+        if self.end-newStart>0:
+            intervals.append(newInter2)
+        return intervals
+    
+    @property
+    def cellCount(self):
+        return self.end-self.start
+    
+    def __str__(self):
+        return f"[{self.offset, self.start, self.end}]"
+
+    def __eq__(self, value):
+        return  value.offset==self.offset and value.start==self.start and value.end==self.end and value.direction==self.direction
+    
+    
 class IPossible(Interval, ABC):
     def makeChoice(self) -> list[IPossible]:
         pass
