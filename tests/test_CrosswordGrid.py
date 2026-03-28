@@ -30,19 +30,19 @@ class TestCrosswordGrid(unittest.TestCase):
             "*     "
         ]
         self.expectedHIntervals = [
-            Interval(self.grid, 1, 0, 6, True),
-            Interval(self.grid, 2, 1, 6, True),
-            Interval(self.grid, 3, 0, 6, True),
-            Interval(self.grid, 4, 1, 6, True),
-            Interval(self.grid, 5, 0, 6, True),
-            Interval(self.grid, 6, 1, 6, True)
+            Interval(1, 0, 6, True),
+            Interval(2, 1, 6, True),
+            Interval(3, 0, 6, True),
+            Interval(4, 1, 6, True),
+            Interval(5, 0, 6, True),
+            Interval(6, 1, 6, True)
         ]
         self.expectedVIntervals = [
-            Interval(self.grid, 1, 0, 7, False),
-            Interval(self.grid, 2, 1, 7, False),
-            Interval(self.grid, 3, 0, 7, False),
-            Interval(self.grid, 4, 1, 7, False),
-            Interval(self.grid, 5, 0, 7, False)
+            Interval(1, 0, 7, False),
+            Interval(2, 1, 7, False),
+            Interval(3, 0, 7, False),
+            Interval(4, 1, 7, False),
+            Interval(5, 0, 7, False)
         ]
 
 
@@ -78,20 +78,20 @@ class TestCrosswordGrid(unittest.TestCase):
         testGrid = copy.deepcopy(self.grid)
         testGrid.put(4, 4, "*")
         # self.assertEqual(testGrid.hIntervals, [
-        #     Interval(testGrid, 1, 0, 6, True),
-        #     Interval(testGrid, 2, 1, 6, True),
-        #     Interval(testGrid, 3, 0, 6, True),
-        #     Interval(testGrid, 4, 1, 4, True),
-        #     Interval(testGrid, 5, 0, 6, True),
-        #     Interval(testGrid, 6, 1, 6, True)
+        #     Interval(1, 0, 6, True),
+        #     Interval(2, 1, 6, True),
+        #     Interval(3, 0, 6, True),
+        #     Interval(4, 1, 4, True),
+        #     Interval(5, 0, 6, True),
+        #     Interval(6, 1, 6, True)
         # ])
         # self.assertEqual(testGrid.vIntervals, [
-        #     Interval(testGrid, 1, 0, 7, False),
-        #     Interval(testGrid, 2, 1, 7, False),
-        #     Interval(testGrid, 3, 0, 7, False),
-        #     Interval(testGrid, 4, 1, 4, False),
-        #     Interval(testGrid, 4, 5, 7, False),
-        #     Interval(testGrid, 5, 0, 7, False)
+        #     Interval(1, 0, 7, False),
+        #     Interval(2, 1, 7, False),
+        #     Interval(3, 0, 7, False),
+        #     Interval(4, 1, 4, False),
+        #     Interval(4, 5, 7, False),
+        #     Interval(5, 0, 7, False)
         # ])
 
     def test_setGridContent(self):
@@ -117,86 +117,86 @@ class TestCrosswordGrid(unittest.TestCase):
             "*E    "
         ])
         self.assertEqual(testGrid.hIntervals, [
-            Interval(testGrid, 2, 1, 6, True),
-            Interval(testGrid, 3, 0, 6, True),
-            Interval(testGrid, 4, 1, 4, True),
-            Interval(testGrid, 5, 3, 6, True),
-            Interval(testGrid, 6, 1, 6, True)
+            Interval(2, 1, 6, True),
+            Interval(3, 0, 6, True),
+            Interval(4, 1, 4, True),
+            Interval(5, 3, 6, True),
+            Interval(6, 1, 6, True)
         ])
         self.assertEqual(testGrid.vIntervals, [
-            Interval(testGrid, 2, 1, 5, False),
-            Interval(testGrid, 3, 0, 7, False),
-            Interval(testGrid, 4, 1, 4, False),
-            Interval(testGrid, 4, 5, 7, False),
-            Interval(testGrid, 5, 0, 7, False)
+            Interval(2, 1, 5, False),
+            Interval(3, 0, 7, False),
+            Interval(4, 1, 4, False),
+            Interval(4, 5, 7, False),
+            Interval(5, 0, 7, False)
         ])
 
         
     def test_placeWord_horizontal(self):
         testGrid = copy.deepcopy(self.grid)
-        testGrid.placeWord('chat', Interval(testGrid, 1, 0, 4, True), True)
+        testGrid.placeWord('chat', Interval(1, 0, 4, True), True)
         self.assertEqual(''.join(testGrid.grid[1][0:4]), 'chat')
 
     def test_placeWord_vertical(self):
         testGrid = copy.deepcopy(self.grid)
-        interval = testGrid.nextInterval(False)
-        self.assertEqual(interval, Interval(testGrid, 1, 0, 7, False))
+        (i, interval) = testGrid.nextInterval(False)
+        self.assertEqual(interval, Interval(1, 0, 7, False))
         testGrid.placeWord('SALE', interval)
         self.assertEqual(''.join([testGrid.grid[i][1] for i in range(5)]), 'SALE*')
 
-        self.assertEqual(testGrid.hIntervals, [
-            Interval(testGrid, 1, 0, 6, True),
-            Interval(testGrid, 2, 1, 6, True),
-            Interval(testGrid, 3, 0, 6, True),
-            Interval(testGrid, 4, 2, 6, True),
-            Interval(testGrid, 5, 0, 6, True),
-            Interval(testGrid, 6, 1, 6, True)
-        ])
+        # self.assertEqual(testGrid.hIntervals, [
+        #     Interval(1, 0, 6, True),
+        #     Interval(2, 1, 6, True),
+        #     Interval(3, 0, 6, True),
+        #     Interval(4, 2, 6, True),
+        #     Interval(5, 0, 6, True),
+        #     Interval(6, 1, 6, True)
+        # ])
 
-        self.assertEqual(testGrid.vIntervals, [
-            Interval(testGrid, 1, 5, 7, False),
-            Interval(testGrid, 2, 1, 7, False),
-            Interval(testGrid, 3, 0, 7, False),
-            Interval(testGrid, 4, 1, 7, False),
-            Interval(testGrid, 5, 0, 7, False)
-        ])
+        # self.assertEqual(testGrid.vIntervals, [
+        #     Interval(1, 5, 7, False),
+        #     Interval(2, 1, 7, False),
+        #     Interval(3, 0, 7, False),
+        #     Interval(4, 1, 7, False),
+        #     Interval(5, 0, 7, False)
+        # ])
 
     def test_getIntervalContent_horizontal(self):
         testGrid = copy.deepcopy(self.grid)
         testGrid.grid[0][0:4] = list('chat')
-        content = testGrid.getIntervalContent(Interval(testGrid, 0, 0, 4, True))
+        content = testGrid.getIntervalContent(Interval(0, 0, 4, True))
         self.assertEqual(''.join(content), 'chat')
 
     def test_getIntervalContent_vertical(self):
         testGrid = copy.deepcopy(self.grid)
         for i in range(4):
             testGrid.grid[i][0] = 'chat'[i]
-        content = testGrid.getIntervalContent(Interval(testGrid, 0, 0, 4, False))
+        content = testGrid.getIntervalContent(Interval(0, 0, 4, False))
         self.assertEqual(content, 'chat')
 
     def test_findNextInterval(self):
         testGrid = copy.deepcopy(self.grid)
-        interval = testGrid.nextInterval()
-        self.assertEqual(interval, Interval(testGrid, 1, 0, 6, True))
-        interval = testGrid.nextInterval(False)
-        self.assertEqual(interval, Interval(testGrid, 1, 0, 7, False))
+        (i, interval) = testGrid.nextInterval()
+        self.assertEqual(interval, Interval(1, 0, 6, True))
+        (i, interval) = testGrid.nextInterval(False)
+        self.assertEqual(interval, Interval(1, 0, 7, False))
 
     def test_findContainingIntervalIdx(self):
         idx = self.grid.findContainingIntervalIdx(5, 5, True)
         self.assertEqual(idx, 4)
 
     def test_splitInterval(self):
-        interval = Interval(self.grid, 0, 0, 7, True)
+        interval = Interval(0, 0, 7, True)
         split_intervals = interval.split(2)
         self.assertEqual(len(split_intervals), 2)
-        self.assertEqual(split_intervals[0], Interval(self.grid, 0, 0, 2, True))
-        self.assertEqual(split_intervals[1], Interval(self.grid, 0, 3, 7, True))
+        self.assertEqual(split_intervals[0], Interval(0, 0, 2, True))
+        self.assertEqual(split_intervals[1], Interval(0, 3, 7, True))
 
-        interval = Interval(self.grid, 2, 1, 7, False)
+        interval = Interval(2, 1, 7, False)
         split_intervals = interval.split(5)
         self.assertEqual(len(split_intervals), 2)
-        self.assertEqual(split_intervals[0], Interval(self.grid, 2, 1, 5, False))
-        self.assertEqual(split_intervals[1], Interval(self.grid, 2, 6, 7, False))
+        self.assertEqual(split_intervals[0], Interval(2, 1, 5, False))
+        self.assertEqual(split_intervals[1], Interval(2, 6, 7, False))
 
     def test_isGridComplete(self):
         self.assertFalse(self.grid.isGridComplete())

@@ -66,11 +66,11 @@ class CrosswordGenerator:
                     curInter += grid.grid[j][i]
                 else:
                     if len(curInter)>1 and " " in curInter:
-                        grid.hIntervals.append(PossibleSet(Interval(grid, j, curStart, curStart+len(curInter), True),  self.dict))
+                        grid.hIntervals.append(PossibleSet(Interval(j, curStart, curStart+len(curInter), True)))
                     curStart = i+1
                     curInter = ""
             if len(curInter)>1 and " " in curInter:
-                grid.hIntervals.append(PossibleSet(Interval(grid, j, curStart, curStart+len(curInter), True), self.dict))
+                grid.hIntervals.append(PossibleSet(Interval(j, curStart, curStart+len(curInter), True)))
 
         grid.vIntervals = []
         for i in range(grid.width):
@@ -81,50 +81,64 @@ class CrosswordGenerator:
                     curInter += grid.grid[j][i]
                 else:
                     if len(curInter)>1 and " " in curInter:
-                        grid.vIntervals.append(PossibleSet(Interval(grid, i, curStart, curStart+len(curInter), False), self.dict))
+                        grid.vIntervals.append(PossibleSet(Interval(i, curStart, curStart+len(curInter), False)))
                     curStart = j+1
                     curInter = ""
             if len(curInter)>1 and " " in curInter:
-                grid.vIntervals.append(PossibleSet(Interval(grid, i, curStart, curStart+len(curInter), False), self.dict))
+                grid.vIntervals.append(PossibleSet(Interval(i, curStart, curStart+len(curInter), False)))
     
 
     def updateConstraints(self, grid:CrosswordGrid):
         for interval in grid.hIntervals:
-            interval.filter()
+            interval.filter(grid.content, grid.usedWords)
         for interval in grid.vIntervals:
-            interval.filter()
+            interval.filter(grid.content, grid.usedWords)
 
     def fillGrid(self, grid:CrosswordGrid, horizontal:bool):
         if grid.isGridComplete() and self.isGridValid(grid):
             return grid
         else:
             self.updateConstraints(grid)
+            print(grid)
+            print("hIntervals : ", grid.hIntervals)
+            print("vIntervals : ", grid.hIntervals)
 
-            interval = grid.nextInterval(horizontal)
+
+            intervalIndex, interval = grid.nextInterval(horizontal)
             if interval is None:
                 return None
             intervalSize = interval.cellCount
             if intervalSize<1:
                 return None
             
-            intervalContent = grid.getIntervalContent(interval)
-            candidates = self.dict.findCandidates(''.join(intervalContent), grid.usedWords)
-            wordidx = [i for i in range(len(candidates))]
-            weights = [pow(len(w), 2) for w in candidates]
+            #intervalContent = grid.getIntervalContent(interval)
+            #candidates = self.dict.findCandidates(''.join(intervalContent), grid.usedWords)
+            #wordidx = [i for i in range(len(candidates))]
+            #weights = [pow(len(w), 2) for w in candidates]
 
             # We will iterate all candidates until we find something that fits
-            newGrid = None
-            while len(candidates)>0 and newGrid is None:
+            newGrid = None            
+            while interval.count>0 and newGrid is None:
+                choices = interval.makeChoice()
+                print(choices)
 
-                # Take a candidate word and remove it so we don't take it twice
-                widx = random.choices(wordidx, weights=weights, k=1)[0]
-                word = candidates[widx]
-                del candidates[widx]
-                del weights[widx]
-                del wordidx[len(wordidx)-1]
+                newGrid = copy.deepcopy(grid)                
 
-                newGrid = copy.deepcopy(grid)
-                newGrid.placeWord(word, interval)
+                # Replace selected interval with new choices in new grid
+                if horizontal:
+                     del newGrid.hIntervals[intervalIndex]
+                else:
+                     del newGrid.vIntervals[intervalIndex]
+                for i, choice in enumerate(choices):
+                    if choice.isSet:
+                        newGrid.placeWord(choice.theSetContent, choice, False)
+                    if horizontal:
+                        newGrid.hIntervals.insert(intervalIndex+i, choice)
+                    else:
+                        newGrid.vIntervals.insert(intervalIndex+i, choice)
+                    if i<len(choices)-1:
+                        newGrid.placeDefinition(choice, choice.end, True)
+
 
                 if self.isGridValid(newGrid):
                     # Fill recursively alternating horizontal and vertical filling

@@ -159,6 +159,8 @@ class Index:
     
 
 class Dictionary:
+    instance:Dictionary
+
     def __init__(self, textFilePath:str, encoding='utf-8'):
         """
         Initialise le dictionnaire en chargeant les mots depuis un fichier texte.
@@ -310,4 +312,10 @@ class Dictionary:
                     cache[subPattern] = words
                 candidates = candidates + [w for w in words if w not in exclusions and w not in candidates]
         return candidates
+
+    def initInstance(inst:Dictionary):
+        Dictionary.instance = inst
+
+    def getInstance()->Dictionary:
+        return Dictionary.instance
 

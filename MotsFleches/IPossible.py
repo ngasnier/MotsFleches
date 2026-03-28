@@ -1,11 +1,11 @@
-from __future__ import annotations # Urk... why is that necessary... Python is a strange language...
-from MotsFleches import CrosswordGrid, Dictionary, Charset
+from __future__ import annotations
+from MotsFleches import Dictionary, Charset
 
 from abc import ABC, abstractmethod
 import random
-
-class Interval(ABC):
-    def __init__(self, grid:CrosswordGrid, offset:int, start:int, end:int, direction:bool):
+ 
+class Interval:
+    def __init__(self, offset:int, start:int, end:int, direction:bool):
         """
         Parameters
         ----------
@@ -17,12 +17,10 @@ class Interval(ABC):
             end index of the interval in the row or column indicated by offset.
             convention is that the interval stop at index end-1.
         """
-        self.grid = grid
         self.offset = offset
         self.start = start
         self.end = end
         self.direction = direction
-        self.content = grid.getIntervalCharset(self)
    
     def split(self, pos:int):
         """
@@ -37,8 +35,8 @@ class Interval(ABC):
         array of Interval. Only intervals of at least one cell are returned.
         """
         newStart = pos+1
-        newInter1 = Interval(self.grid, self.offset, self.start, pos, self.direction)
-        newInter2 = Interval(self.grid, self.offset, newStart, self.end, self.direction)
+        newInter1 = Interval(self.offset, self.start, pos, self.direction)
+        newInter2 = Interval(self.offset, newStart, self.end, self.direction)
         intervals = [  ]
         if pos-self.start>0:
             intervals.append(newInter1)
@@ -52,10 +50,22 @@ class Interval(ABC):
     
     def __str__(self):
         return f"[{self.offset, self.start, self.end}]"
+    
+    def __repr__(self):
+        return self.__str__()
 
     def __eq__(self, value):
         return  value.offset==self.offset and value.start==self.start and value.end==self.end and value.direction==self.direction
     
+    def getIntervalCharset(self, content:list[list[Charset]]):
+        if self.direction:
+            return content[self.offset][self.start:self.end]
+        else:
+            contenu = []
+            for j in range(self.start, self.end):
+                contenu.append(content[j][self.offset])
+            return contenu
+
     
 class IPossible(Interval, ABC):
     def makeChoice(self) -> list[IPossible]:
@@ -69,18 +79,21 @@ class IPossible(Interval, ABC):
     def isSet(self) -> bool:
         pass
 
-    def filter(self):
+    @property
+    def theSetContent(self) -> str:
+        pass
+
+    def filter(self, content:list[list[Charset]], usedWords:list[str]):
         pass
 
 class AllWords(IPossible):
-    def __init__(self, interval:Interval, dict:Dictionary):
-        Interval.__init__(self, interval.grid, interval.offset, interval.start, interval.end, interval.direction)
+    def __init__(self, interval:Interval):
+        Interval.__init__(self, interval.offset, interval.start, interval.end, interval.direction)
         self.size = interval.cellCount
-        self.dictionary = dict
         self.words = None
 
-    def queryDictionary(self):
-        self.words = self.dictionary.query(self.content, self.grid.usedWords)
+    def queryDictionary(self, content:list[Charset]):
+        self.words = Dictionary.getInstance().query(content, []) # TODO : add way to specify self.grid.usedWords
 
     def makeChoice(self) -> list[IPossible]:
         if self.words is None:
@@ -93,16 +106,19 @@ class AllWords(IPossible):
     
     @property
     def count(self) -> int:
-        if self.words is None:
-            self.queryDictionary()
         return len(self.words)
     
     @property
     def isSet(self) -> bool:
         return False
 
-    def filter(self):
-        self.queryDictionary()
+    @property
+    def theSetContent(self) -> str:
+        return ""
+
+    def filter(self, content:list[list[Charset]], usedWords:list[str]):
+        subcontent = self.getIntervalCharset(content)
+        self.queryDictionary(subcontent)
 
     def __str__(self):
         content = ""
@@ -114,7 +130,7 @@ class AllWords(IPossible):
 
 class SetWord(IPossible):
     def __init__(self, interval:Interval, word:str):
-        Interval.__init__(self, interval.grid, interval.offset, interval.start, interval.end, interval.direction)
+        Interval.__init__(self, interval.offset, interval.start, interval.end, interval.direction)
         self.size = interval.cellCount
         self.word = word
         
@@ -128,8 +144,12 @@ class SetWord(IPossible):
     @property
     def isSet(self) -> bool:
         return True
-
-    def filter(self):
+    
+    @property
+    def theSetContent(self) -> str:
+        return self.word
+  
+    def filter(self, content:list[list[Charset]], usedWords:list[str]):
         return
 
     def __str__(self):
@@ -138,8 +158,8 @@ class SetWord(IPossible):
     
 class SplitInterval(IPossible):
     
-    def __init__(self, interval:Interval, pos:int, dict:Dictionary):
-        Interval.__init__(self, interval.grid, interval.offset, interval.start, interval.end, interval.direction)
+    def __init__(self, interval:Interval, pos:int):
+        Interval.__init__(self, interval.offset, interval.start, interval.end, interval.direction)
         if pos<0:
             raise ValueError("pos must be positive.")
         if pos>interval.cellCount-1:
@@ -148,59 +168,69 @@ class SplitInterval(IPossible):
         self.pos = pos
         self.before = None
         self.after = None
+        self.canMakeChoice = False
 
         split = interval.split(interval.start+pos)
 
         for newInterval in split:
             if newInterval.start<pos:
-                self.before = AllWords(newInterval, dict) 
+                self.before = AllWords(newInterval) 
             else:
                 if newInterval.cellCount>0:
-                    self.after = PossibleSet(newInterval, dict)
+                    self.after = PossibleSet(newInterval)
 
     def makeChoice(self):
         choice = []
-        if self.before is not None:
-            choice.append(self.before)
-        if self.after is not None:
-            choice.append(self.after)
+        if self.canMakeChoice:
+            if self.before is not None:
+                choice.append(self.before)
+            if self.after is not None:
+                choice.append(self.after)
+        self.canMakeChoice = False
         return choice
     
     @property
     def count(self)  -> int:
-        if (self.before is not None and self.before.count==0) or (self.after is not None and self.after.count==0):
-            return 0
-        else:
+        if self.canMakeChoice:
             return 1
+        else:
+            return 0
 
     @property
     def isSet(self) -> bool:
         return False
     
-    def filter(self):
+    @property
+    def theSetContent(self) -> str:
+        return ""
+
+    def filter(self, content:list[Charset], usedWords:list[str]):
         if self.before is not None:
-            self.before.filter()
+            self.before.filter(content, usedWords)
         if self.after is not None:
-            self.after.filter()
+            self.after.filter(content, usedWords)
+
+        self.canMakeChoice = ((self.before is not None and self.before.count!=0) or (self.after is not None and self.after.count!=0))
         return    
     
     def __str__(self):
-        return f"SplitInterval({self.pos}, {self.before}, {self.after})"
+        strint=Interval.__str__(self)
+        return f"SplitInterval({strint}, {self.pos})"
     
 class PossibleSet(IPossible):
-    def __init__(self, interval:Interval, dict:Dictionary):
-        Interval.__init__(self, interval.grid, interval.offset, interval.start, interval.end, interval.direction)
+    def __init__(self, interval:Interval):
+        Interval.__init__(self, interval.offset, interval.start, interval.end, interval.direction)
         self.possibles = []
-        self.possibles.append(AllWords(interval, dict))
+        self.possibles.append(AllWords(interval))
         for i in range(interval.cellCount):
-            self.possibles.append(SplitInterval(interval, i, dict))
+            self.possibles.append(SplitInterval(interval, i))
 
     def makeChoice(self):
         if len(self.possibles)==0:
             return []
         choice = random.choices(self.possibles, k=1)[0]
-        self.words.remove(choice[0])
-        return choice
+        self.possibles.remove(choice)
+        return [ choice ]
     
     @property
     def count(self)  -> int:
@@ -210,21 +240,26 @@ class PossibleSet(IPossible):
     def isSet(self) -> bool:
         return False
     
-    def filter(self):
+    @property
+    def theSetContent(self) -> str:
+        return ""
+
+    def filter(self, content:list[list[Charset]], usedWords:list[str]):
         for p in self.possibles:
-            p.filter()
+            p.filter(content, usedWords)
         
         self.possibles = list(filter(lambda p: p.count>0, self.possibles))
 
     def __str__(self):
-        str = "["
-        for p in self.possibles:
-            if isinstance(p, PossibleSet):
-                str+=f"PossibleSet({p.count}), "
-            else:
-                str+=f"{p}, "
-        str += "]"
-        return str
+        strint=Interval.__str__(self)
+        # str = "["
+        # for p in self.possibles:
+        #     if isinstance(p, PossibleSet):
+        #         str+=f"PossibleSet({strint}, {p.count}), "
+        #     else:
+        #         str+=f"{p}, "
+        # str += "]"
+        return f"PossibleSet({strint})"
     
     def __repr__(self):
         return self.__str__()

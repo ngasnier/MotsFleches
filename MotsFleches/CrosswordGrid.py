@@ -95,44 +95,44 @@ class CrosswordGrid:
         #self.initIntervals()
 
     def placeDefinition(self, interval:Interval, pos: int, ignoreStart:bool=False):
-        if pos<0 or pos>=interval.end:
+        if pos<0 or pos>interval.end or pos>=self.width:
             return False
         
         if interval.direction:
             self.grid[interval.offset][pos] = "*"
             self.content[interval.offset][pos].empty()
 
-            interIdx = self.findContainingIntervalIdx(interval.offset, pos, False)
-            if interIdx is not None: 
-                splitInter = self.vIntervals[interIdx].split(interval.offset)
-                del self.vIntervals[interIdx]
-                for inter in splitInter:
-                    if inter.end-inter.start>1:
-                        self.vIntervals.insert(interIdx, inter)
-                        interIdx+=1
+            # interIdx = self.findContainingIntervalIdx(interval.offset, pos, False)
+            # if interIdx is not None: 
+                # splitInter = self.vIntervals[interIdx].split(interval.offset)
+                # del self.vIntervals[interIdx]
+                # for inter in splitInter:
+                #     if inter.end-inter.start>1:
+                #         self.vIntervals.insert(interIdx, inter)
+                #         interIdx+=1
         else:
             self.grid[pos][interval.offset] = "*"
             self.content[pos][interval.offset].empty()
 
-            interIdx = self.findContainingIntervalIdx(pos, interval.offset, True)
-            if interIdx is not None:
-                splitInter = self.hIntervals[interIdx].split(interval.offset)
-                del self.hIntervals[interIdx]
-                for inter in splitInter:
-                    if inter.end-inter.start>1:
-                        self.hIntervals.insert(interIdx, inter)
-                        interIdx+=1
+            # interIdx = self.findContainingIntervalIdx(pos, interval.offset, True)
+            # if interIdx is not None:
+            #     splitInter = self.hIntervals[interIdx].split(interval.offset)
+            #     del self.hIntervals[interIdx]
+            #     for inter in splitInter:
+            #         if inter.end-inter.start>1:
+            #             self.hIntervals.insert(interIdx, inter)
+            #             interIdx+=1
 
-        intervals = interval.split(pos)
-        ipos = 0
-        for inter in intervals: 
-            if inter.end-inter.start>1 and (not ignoreStart or (ignoreStart and inter.start>pos)):
-                if interval.direction:
-                    self.hIntervals.insert(ipos, inter)
-                    ipos+=1
-                else:
-                    self.vIntervals.insert(ipos, inter)
-                    ipos+=1
+        # intervals = interval.split(pos)
+        # ipos = 0
+        # for inter in intervals: 
+        #     if inter.end-inter.start>1 and (not ignoreStart or (ignoreStart and inter.start>pos)):
+        #         if interval.direction:
+        #             self.hIntervals.insert(ipos, inter)
+        #             ipos+=1
+        #         else:
+        #             self.vIntervals.insert(ipos, inter)
+        #             ipos+=1
         return True
 
 
@@ -162,29 +162,20 @@ class CrosswordGrid:
                 contenu += self.grid[j][interval.offset]
             return contenu
         
-    def getIntervalCharset(self, interval:Interval):
-        if interval.direction:
-            return self.content[interval.offset][interval.start:interval.end]
-        else:
-            contenu = []
-            for j in range(interval.start, interval.end):
-                contenu.append(self.content[j][interval.offset])
-            return contenu
-
     def nextInterval(self, forceDirection:bool = None):        
         if (forceDirection is not None and forceDirection==True) or forceDirection==None:
-            for interval in self.hIntervals:
+            for i, interval in enumerate(self.hIntervals):
                 if not interval.isSet:
-                    return interval
+                    return (i, interval)
         
         if forceDirection is not None and forceDirection==True:
-            return None
+            return (-1, None)
 
-        for interval in self.vIntervals:
+        for i, interval in enumerate(self.vIntervals):
             if not interval.isSet:
-               return interval
+               return (i, interval)
 
-        return None
+        return (-1, None)
         
     def findContainingIntervalIdx(self, line:int, col:int, horizontal:bool):
         if horizontal:
