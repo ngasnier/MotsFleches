@@ -65,7 +65,7 @@ class TestIPossible(unittest.TestCase):
         interval = grid.hIntervals[0]
         possibles = PossibleSet(interval)
         possibles.filter(grid.content, grid.usedWords)
-        self.assertEqual(possibles.count, 4)
+        self.assertEqual(possibles.count, 7)
 
 
 

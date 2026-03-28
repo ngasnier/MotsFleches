@@ -49,7 +49,7 @@ class Interval:
         return self.end-self.start
     
     def __str__(self):
-        return f"[{self.offset, self.start, self.end}]"
+        return f"[{self.offset, self.start, self.end, self.direction}]"
     
     def __repr__(self):
         return self.__str__()

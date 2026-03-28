@@ -163,7 +163,7 @@ class CrosswordGrid:
             return contenu
         
     def nextInterval(self, forceDirection:bool = None):        
-        if (forceDirection is not None and forceDirection==True) or forceDirection==None:
+        if (forceDirection is not None and forceDirection==True) or forceDirection is None:
             for i, interval in enumerate(self.hIntervals):
                 if not interval.isSet:
                     return (i, interval)

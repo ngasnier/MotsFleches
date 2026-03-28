@@ -101,20 +101,20 @@ class CrosswordGenerator:
             self.updateConstraints(grid)
             print(grid)
             print("hIntervals : ", grid.hIntervals)
-            print("vIntervals : ", grid.hIntervals)
+            print("vIntervals : ", grid.vIntervals)
 
 
-            intervalIndex, interval = grid.nextInterval(horizontal)
+            intervalIndex, interval = grid.nextInterval()
             if interval is None:
                 return None
             intervalSize = interval.cellCount
             if intervalSize<1:
                 return None
+            if interval.count==0:
+                print("interval without solution")
+                return None
             
-            #intervalContent = grid.getIntervalContent(interval)
-            #candidates = self.dict.findCandidates(''.join(intervalContent), grid.usedWords)
-            #wordidx = [i for i in range(len(candidates))]
-            #weights = [pow(len(w), 2) for w in candidates]
+            print("Possible for choices : ", interval)
 
             # We will iterate all candidates until we find something that fits
             newGrid = None            
@@ -132,11 +132,13 @@ class CrosswordGenerator:
                 for i, choice in enumerate(choices):
                     if choice.isSet:
                         newGrid.placeWord(choice.theSetContent, choice, False)
+                        newGrid.placeDefinition(choice, choice.end, True)
                     if horizontal:
                         newGrid.hIntervals.insert(intervalIndex+i, choice)
                     else:
                         newGrid.vIntervals.insert(intervalIndex+i, choice)
                     if i<len(choices)-1:
+                        print("place definition", choice, choice.end)
                         newGrid.placeDefinition(choice, choice.end, True)
 
 
@@ -145,7 +147,8 @@ class CrosswordGenerator:
                     newGrid = self.fillGrid(newGrid, not horizontal)
                 else:
                     newGrid = None            
-
+            if newGrid is None:
+                print("<- backtracking")
             return newGrid
         
 

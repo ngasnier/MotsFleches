@@ -236,6 +236,9 @@ class Dictionary:
     def query(self, charset:list[Charset], exclusions=[]):
         self.nbLookups += 1
         patSize = len(charset)
+        for cs in charset: 
+            if cs.count==0:
+                return []        
         pattern = ''.join([f"[{cs.letters}]" for cs in charset])
         cache = self.cacheBySize[patSize]
         words = cache.get(pattern, None)
