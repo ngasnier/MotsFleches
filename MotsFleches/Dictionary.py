@@ -82,6 +82,7 @@ class Charset:
     def remove(self, other:Charset):
         self.chars = self.chars & ( other.chars ^ Charset.ALL_LETTERS )
 
+    @property
     def count(self):
         # if too slow : use gmpy popcount()
         i:int = self.chars
@@ -249,15 +250,20 @@ class Dictionary:
             bestResult = index.queryAllWords()
             bestResultCount = 1000000
             for pos in range(patSize):
-                if charset[pos].count()==1:
+                if charset[pos].count==1:
                     result = index.query(pos, charset[pos].__str__())
                     if len(result)<bestResultCount:
                         bestResult = result
                         bestResultCount = len(result)
 
-            regexp = re.compile(f'^{pattern}$')
-            words = list(filter(regexp.match, bestResult))
-            cache[pattern] = words
+            try:
+                regexp = re.compile(f'^{pattern}$')
+                words = list(filter(regexp.match, bestResult))
+                cache[pattern] = words
+            except Exception as e:
+                print(e)
+                print("pattern was", pattern, charset)
+                raise Exception("cannot query dictionary because of error")
         return [w for w in words if w not in exclusions]
 
     def findCandidates(self, placeholder:str, exclusions=[], exactLength:bool=False):

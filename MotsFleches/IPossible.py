@@ -92,8 +92,8 @@ class AllWords(IPossible):
         self.size = interval.cellCount
         self.words = None
 
-    def queryDictionary(self, content:list[Charset]):
-        self.words = Dictionary.getInstance().query(content, []) # TODO : add way to specify self.grid.usedWords
+    def queryDictionary(self, content:list[Charset], usedWords:list[str]):
+        self.words = Dictionary.getInstance().query(content, usedWords)
 
     def makeChoice(self) -> list[IPossible]:
         if self.words is None:
@@ -118,7 +118,7 @@ class AllWords(IPossible):
 
     def filter(self, content:list[list[Charset]], usedWords:list[str]):
         subcontent = self.getIntervalCharset(content)
-        self.queryDictionary(subcontent)
+        self.queryDictionary(subcontent, usedWords)
 
     def __str__(self):
         content = ""
@@ -205,12 +205,18 @@ class SplitInterval(IPossible):
         return ""
 
     def filter(self, content:list[Charset], usedWords:list[str]):
+        canPlaceDefinition = False
+        if self.direction:
+            canPlaceDefinition = content[self.offset][self.pos].count>0
+        else:
+            canPlaceDefinition = content[self.pos][self.offset].count>0
+
         if self.before is not None:
             self.before.filter(content, usedWords)
         if self.after is not None:
             self.after.filter(content, usedWords)
 
-        self.canMakeChoice = ((self.before is not None and self.before.count!=0) or (self.after is not None and self.after.count!=0))
+        self.canMakeChoice = canPlaceDefinition and ((self.before is not None and self.before.count!=0) or (self.after is not None and self.after.count!=0))
         return    
     
     def __str__(self):

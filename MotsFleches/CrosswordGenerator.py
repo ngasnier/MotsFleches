@@ -125,7 +125,7 @@ class CrosswordGenerator:
                 newGrid = copy.deepcopy(grid)                
 
                 # Replace selected interval with new choices in new grid
-                if horizontal:
+                if interval.direction:
                      del newGrid.hIntervals[intervalIndex]
                 else:
                      del newGrid.vIntervals[intervalIndex]
@@ -133,11 +133,14 @@ class CrosswordGenerator:
                     if choice.isSet:
                         newGrid.placeWord(choice.theSetContent, choice, False)
                         newGrid.placeDefinition(choice, choice.end, True)
-                    if horizontal:
+                    if interval.direction:
                         newGrid.hIntervals.insert(intervalIndex+i, choice)
                     else:
                         newGrid.vIntervals.insert(intervalIndex+i, choice)
-                    if i<len(choices)-1:
+                    if choice.start>interval.start:
+                        print("place definition", choice, choice.start-1)
+                        newGrid.placeDefinition(choice, choice.start-1, True)
+                    if choice.end<interval.end: #i<len(choices)-1:
                         print("place definition", choice, choice.end)
                         newGrid.placeDefinition(choice, choice.end, True)
 

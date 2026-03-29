@@ -77,10 +77,10 @@ class TestDictionary(unittest.TestCase):
 
     def test_Count(self):
         allLetters = Charset()
-        self.assertEqual(allLetters.count(), 26)
+        self.assertEqual(allLetters.count, 26)
         letterA = Charset(Charset.A)
         letterB = Charset(Charset.B)
         letterA.add(letterB)
-        self.assertEqual(letterA.count(), 2)
+        self.assertEqual(letterA.count, 2)
         allLetters.empty()
-        self.assertEqual(allLetters.count(), 0)
+        self.assertEqual(allLetters.count, 0)
